@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Login - FindJob{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card login-card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">
+                    <i class="fas fa-sign-in-alt text-primary me-2"></i>Login
+                </h2>
+                
+                <form id="loginForm" method="POST" action="{{ url_for('main.login') }}" novalidate>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope me-1"></i>Email Address
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                        <div class="invalid-feedback">
+                            Please provide a valid email address.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Password
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback">
+                            Password is required.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me">
+                        <label class="form-check-label" for="remember_me">Remember me</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 login-btn">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </button>
+                </form>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <p class="mb-0">Don't have an account?</p>
+                    <a href="{{ url_for('main.register') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-1"></i>Create Account
+                    </a>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="#" class="text-muted small">
+                        <i class="fas fa-question-circle me-1"></i>Forgot your password?
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
