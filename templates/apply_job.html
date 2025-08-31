@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Apply for {{ job.title }} - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-paper-plane me-2"></i>Apply for {{ job.title }}
+                    </h3>
+                    <p class="mb-0">{{ job.company_name }} • {{ job.location }}</p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('main.submit_application', job_id=job.id) }}" enctype="multipart/form-data" id="applicationForm">
+                    <div class="card-body">
+                        <!-- Personal Information -->
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-user me-2"></i>Personal Information
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="full_name" class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" id="full_name" name="full_name" 
+                                           value="{{ user.full_name or user.username }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ user.email }}" required readonly>
+                                </div>
+                                {% if job.require_phone %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone" class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" 
+                                           value="{{ user.phone or '' }}" required>
+                                </div>
+                                {% endif %}
+                                {% if job.require_address %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="address" name="address" rows="2">{{ user.location or '' }}</textarea>
+                                </div>
+                                {% endif %}
+                                {% if job.require_work_authorization %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="work_authorization" class="form-label">Work Authorization Status *</label>
+                                    <select class="form-select" id="work_authorization" name="work_authorization" required>
+                                        <option value="">Select...</option>
+                                        <option value="citizen">Citizen</option>
+                                        <option value="permanent_resident">Permanent Resident</option>
+                                        <option value="work_visa">Work Visa Holder</option>
+                                        <option value="student_visa">Student Visa (with work authorization)</option>
+                                        <option value="requires_sponsorship">Requires Sponsorship</option>
+                                    </select>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Professional Profile -->
+                        {% if job.require_experience_years or job.require_expected_salary %}
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-briefcase me-2"></i>Professional Profile
+                            </h5>
+                            <div class="row">
+                                {% if job.require_experience_years %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="years_experience" class="form-label">Years of Experience *</label>
+                                    <select class="form-select" id="years_experience" name="years_experience" required>
+                                        <option value="">Select...</option>
+                                        <option value="0">Entry Level (0-1 years)</option>
+                                        <option value="1">1-2 years</option>
+                                        <option value="3">3-5 years</option>
+                                        <option value="6">6-10 years</option>
+                                        <option value="11">11+ years</option>
+                                    </select>
+                                </div>
+                                {% endif %}
+                                {% if job.require_expected_salary %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="expected_salary" class="form-label">Expected Salary</label>
+                                    <input type="text" class="form-control" id="expected_salary" name="expected_salary" 
+                                           placeholder="e.g., $70,000 - $80,000">
+                                </div>
+                                {% endif %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="willing_to_relocate" name="willing_to_relocate">
+                                        <label class="form-check-label" for="willing_to_relocate">
+                                            Willing to relocate
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="willing_to_travel" name="willing_to_travel">
+                                        <label class="form-check-label" for="willing_to_travel">
+                                            Willing to travel
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Education -->
+                        {% if job.require_education %}
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-graduation-cap me-2"></i>Education
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="highest_qualification" class="form-label">Highest Qualification *</label>
+                                    <select class="form-select" id="highest_qualification" name="highest_qualification" required>
+                                        <option value="">Select...</option>
+                                        <option value="high_school">High School</option>
+                                        <option value="associate">Associate Degree</option>
+                                        <option value="bachelor">Bachelor's Degree</option>
+                                        <option value="master">Master's Degree</option>
+                                        <option value="phd">PhD/Doctorate</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="institution_name" class="form-label">Institution Name</label>
+                                    <input type="text" class="form-control" id="institution_name" name="institution_name">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="field_of_study" class="form-label">Field of Study</label>
+                                    <input type="text" class="form-control" id="field_of_study" name="field_of_study">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="graduation_year" class="form-label">Graduation Year</label>
+                                    <input type="number" class="form-control" id="graduation_year" name="graduation_year" 
+                                           min="1950" max="2030">
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="certifications" class="form-label">Certifications (Optional)</label>
+                                    <textarea class="form-control" id="certifications" name="certifications" rows="3" 
+                                              placeholder="List any relevant certifications, licenses, or professional credentials"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Skills -->
+                        {% if job.require_skills %}
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-cogs me-2"></i>Skills & Expertise
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="technical_skills" class="form-label">Technical Skills *</label>
+                                    <textarea class="form-control" id="technical_skills" name="technical_skills" rows="4" 
+                                              placeholder="e.g., Python, JavaScript, React, SQL, etc." required></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="soft_skills" class="form-label">Soft Skills</label>
+                                    <textarea class="form-control" id="soft_skills" name="soft_skills" rows="4" 
+                                              placeholder="e.g., Communication, Leadership, Problem-solving, etc."></textarea>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="languages" class="form-label">Language Proficiency</label>
+                                    <textarea class="form-control" id="languages" name="languages" rows="2" 
+                                              placeholder="e.g., English (Native), Spanish (Fluent), French (Basic)"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Documents -->
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-file-upload me-2"></i>Documents & Links
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="resume" class="form-label">Resume/CV *</label>
+                                    <input type="file" class="form-control" id="resume" name="resume" 
+                                           accept=".pdf,.doc,.docx" required>
+                                    <div class="form-text">PDF, DOC, or DOCX format (max 5MB)</div>
+                                </div>
+                                {% if job.require_cover_letter %}
+                                <div class="col-12 mb-3">
+                                    <label for="cover_letter" class="form-label">Cover Letter *</label>
+                                    <textarea class="form-control" id="cover_letter" name="cover_letter" rows="6" 
+                                              placeholder="Write a personalized message explaining why you're interested in this position..." required></textarea>
+                                </div>
+                                {% endif %}
+                                {% if job.require_portfolio %}
+                                <div class="col-md-4 mb-3">
+                                    <label for="portfolio_url" class="form-label">Portfolio URL</label>
+                                    <input type="url" class="form-control" id="portfolio_url" name="portfolio_url" 
+                                           placeholder="https://yourportfolio.com">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="linkedin_url" class="form-label">LinkedIn Profile</label>
+                                    <input type="url" class="form-control" id="linkedin_url" name="linkedin_url" 
+                                           placeholder="https://linkedin.com/in/yourprofile">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="github_url" class="form-label">GitHub Profile</label>
+                                    <input type="url" class="form-control" id="github_url" name="github_url" 
+                                           placeholder="https://github.com/yourusername">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Job-Specific Questions -->
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-question-circle me-2"></i>Additional Information
+                            </h5>
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label for="motivation" class="form-label">Why do you want to work here? *</label>
+                                    <textarea class="form-control" id="motivation" name="motivation" rows="4" 
+                                              placeholder="Explain what interests you about this role and company..." required></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="availability_date" class="form-label">Available Start Date *</label>
+                                    <input type="date" class="form-control" id="availability_date" name="availability_date" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="referred_by" class="form-label">Referred by (Optional)</label>
+                                    <input type="text" class="form-control" id="referred_by" name="referred_by" 
+                                           placeholder="Employee name if you were referred">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Legal/Consent -->
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-shield-alt me-2"></i>Legal & Consent
+                            </h5>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="terms_accepted" name="terms_accepted" required>
+                                <label class="form-check-label" for="terms_accepted">
+                                    I agree to the <a href="#" target="_blank">Terms & Conditions</a> and confirm that all information provided is accurate. *
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="data_consent" name="data_consent" required>
+                                <label class="form-check-label" for="data_consent">
+                                    I consent to the processing of my personal data for recruitment purposes. *
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-light">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.jobs') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Jobs
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Application
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('applicationForm').addEventListener('submit', function(e) {
+    // Basic form validation
+    const requiredFields = this.querySelectorAll('[required]');
+    for (let field of requiredFields) {
+        if (!field.value.trim()) {
+            e.preventDefault();
+            field.focus();
+            alert('Please fill in all required fields.');
+            return;
+        }
+    }
+    
+    // File size validation
+    const resumeFile = document.getElementById('resume').files[0];
+    if (resumeFile && resumeFile.size > 5 * 1024 * 1024) { // 5MB
+        e.preventDefault();
+        alert('Resume file size must be less than 5MB.');
+        return;
+    }
+});
+
+// Set minimum date to today
+document.getElementById('availability_date').min = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}
