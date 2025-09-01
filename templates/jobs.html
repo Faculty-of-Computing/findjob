@@ -203,7 +203,7 @@
         <!-- Application Modal -->
         {% if logged_in() and current_user().role == 'seeker' %}
         <div class="modal fade" id="applyModal{{ job.id }}" tabindex="-1" aria-labelledby="applyModalLabel{{ job.id }}" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header bg-success text-white">
                         <h5 class="modal-title" id="applyModalLabel{{ job.id }}">
@@ -211,26 +211,284 @@
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form method="POST" action="{{ url_for('main.apply_job_form', job_id=job.id) }}">
-                        <div class="modal-body">
+                    <form method="POST" action="{{ url_for('main.submit_application', job_id=job.id) }}" enctype="multipart/form-data">
+                        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
                                 You are applying for <strong>{{ job.title }}</strong>
                                 {% if job.company_name %}at <strong>{{ job.company_name }}</strong>{% endif %}.
                             </div>
                             
-                            <div class="mb-3">
-                                <label for="coverLetter{{ job.id }}" class="form-label">
-                                    <i class="fas fa-file-alt me-1"></i>Cover Letter (Optional)
-                                </label>
-                                <textarea class="form-control" 
-                                          id="coverLetter{{ job.id }}" 
-                                          name="cover_letter" 
-                                          rows="5" 
-                                          placeholder="Tell the employer why you're interested in this position and what makes you a great candidate..."></textarea>
-                                <div class="form-text">
-                                    <i class="fas fa-lightbulb me-1"></i>A personalized cover letter can help your application stand out
+                            <!-- Personal Information -->
+                            <div class="mb-4">
+                                <h6 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-user me-2"></i>Personal Information
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="full_name{{ job.id }}" class="form-label">Full Name *</label>
+                                        <input type="text" class="form-control" id="full_name{{ job.id }}" name="full_name" 
+                                               value="{{ current_user().full_name or current_user().username }}" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="email{{ job.id }}" class="form-label">Email Address *</label>
+                                        <input type="email" class="form-control" id="email{{ job.id }}" name="email" 
+                                               value="{{ current_user().email }}" required readonly>
+                                    </div>
+                                    {% if job.require_phone %}
+                                    <div class="col-md-6 mb-3">
+                                        <label for="phone{{ job.id }}" class="form-label">Phone Number *</label>
+                                        <input type="tel" class="form-control" id="phone{{ job.id }}" name="phone" 
+                                               value="{{ current_user().phone or '' }}" required>
+                                    </div>
+                                    {% endif %}
+                                    {% if job.require_address %}
+                                    <div class="col-md-6 mb-3">
+                                        <label for="address{{ job.id }}" class="form-label">Address *</label>
+                                        <textarea class="form-control" id="address{{ job.id }}" name="address" rows="2" required>{{ current_user().location or '' }}</textarea>
+                                    </div>
+                                    {% endif %}
                                 </div>
+                            </div>
+
+                            <!-- Work Authorization -->
+                            {% if job.require_work_authorization %}
+                            <div class="mb-4">
+                                <h6 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-id-card me-2"></i>Work Authorization
+                                </h6>
+                                <div class="col-md-6 mb-3">
+                                    <label for="work_authorization{{ job.id }}" class="form-label">Work Authorization Status *</label>
+                                    <select class="form-select" id="work_authorization{{ job.id }}" name="work_authorization" required>
+                                        <option value="">Select...</option>
+                                        <option value="citizen">Citizen</option>
+                                        <option value="permanent_resident">Permanent Resident</option>
+                                        <option value="work_visa">Work Visa Holder</option>
+                                        <option value="student_visa">Student Visa (with work authorization)</option>
+                                        <option value="requires_sponsorship">Requires Sponsorship</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Professional Profile -->
+                            {% if job.require_experience_years or job.require_expected_salary %}
+                            <div class="mb-4">
+                                <h6 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-briefcase me-2"></i>Professional Profile
+                                </h6>
+                                <div class="row">
+                                    {% if job.require_experience_years %}
+                                    <div class="col-md-6 mb-3">
+                                        <label for="years_experience{{ job.id }}" class="form-label">Years of Experience *</label>
+                                        <select class="form-select" id="years_experience{{ job.id }}" name="years_experience" required>
+                                            <option value="">Select...</option>
+                                            <option value="0">Entry Level (0-1 years)</option>
+                                            <option value="1">1-2 years</option>
+                                            <option value="3">3-5 years</option>
+                                            <option value="6">6-10 years</option>
+                                            <option value="11">11+ years</option>
+                                        </select>
+                                    </div>
+                                    {% endif %}
+                                    {% if job.require_expected_salary %}
+                                    <div class="col-md-6 mb-3">
+                                        <label for="expected_salary{{ job.id }}" class="form-label">Expected Salary *</label>
+                                        <input type="text" class="form-control" id="expected_salary{{ job.id }}" name="expected_salary" 
+                                               placeholder="e.g., $70,000 - $80,000" required>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Education -->
+                            {% if job.require_education %}
+                            <div class="mb-4">
+                                <h6 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-graduation-cap me-2"></i>Education
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="highest_qualification{{ job.id }}" class="form-label">Highest Qualification *</label>
+                                        <select class="form-select" id="highest_qualification{{ job.id }}" name="highest_qualification" required>
+                                            <option value="">Select...</option>
+                                            <option value="high_school">High School</option>
+                                            <option value="associate">Associate Degree</option>
+                                            <option value="bachelor">Bachelor's Degree</option>
+                                            <option value="master">Master's Degree</option>
+                                            <option value="phd">PhD/Doctorate</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="institution_name{{ job.id }}" class="form-label">Institution Name</label>
+                                        <input type="text" class="form-control" id="institution_name{{ job.id }}" name="institution_name">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="field_of_study{{ job.id }}" class="form-label">Field of Study</label>
+                                        <input type="text" class="form-control" id="field_of_study{{ job.id }}" name="field_of_study">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="graduation_year{{ job.id }}" class="form-label">Graduation Year</label>
+                                        <input type="number" class="form-control" id="graduation_year{{ job.id }}" name="graduation_year" 
+                                               min="1950" max="2030">
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Skills -->
+                            {% if job.require_skills %}
+                            <div class="mb-4">
+                                <h6 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-cogs me-2"></i>Skills & Expertise
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="technical_skills{{ job.id }}" class="form-label">Technical Skills *</label>
+                                        <textarea class="form-control" id="technical_skills{{ job.id }}" name="technical_skills" rows="3" 
+                                                  placeholder="e.g., Python, JavaScript, React, SQL" required></textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="soft_skills{{ job.id }}" class="form-label">Soft Skills</label>
+                                        <textarea class="form-control" id="soft_skills{{ job.id }}" name="soft_skills" rows="3" 
+                                                  placeholder="e.g., Communication, Leadership"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Documents & Links -->
+                            <div class="mb-4">
+                                <h6 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-file-upload me-2"></i>Documents & Links
+                                </h6>
+                                <div class="row">
+                                    {% if job.require_resume %}
+                                    <div class="col-12 mb-3">
+                                        <label for="resume{{ job.id }}" class="form-label">Resume/CV *</label>
+                                        <input type="file" class="form-control" id="resume{{ job.id }}" name="resume" 
+                                               accept=".pdf,.doc,.docx" required>
+                                        <div class="form-text">PDF, DOC, or DOCX format (max 5MB)</div>
+                                    </div>
+                                    {% else %}
+                                    <div class="col-12 mb-3">
+                                        <label for="resume{{ job.id }}" class="form-label">Resume/CV (Optional)</label>
+                                        <input type="file" class="form-control" id="resume{{ job.id }}" name="resume" 
+                                               accept=".pdf,.doc,.docx">
+                                        <div class="form-text">PDF, DOC, or DOCX format (max 5MB)</div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if job.require_cover_letter %}
+                                    <div class="col-12 mb-3">
+                                        <label for="cover_letter{{ job.id }}" class="form-label">Cover Letter *</label>
+                                        <textarea class="form-control" id="cover_letter{{ job.id }}" name="cover_letter" rows="4" 
+                                                  placeholder="Write a personalized message explaining why you're interested in this position..." required></textarea>
+                                    </div>
+                                    {% else %}
+                                    <div class="col-12 mb-3">
+                                        <label for="cover_letter{{ job.id }}" class="form-label">Cover Letter (Optional)</label>
+                                        <textarea class="form-control" id="cover_letter{{ job.id }}" name="cover_letter" rows="4" 
+                                                  placeholder="Tell the employer why you're interested in this position and what makes you a great candidate..."></textarea>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if job.require_portfolio_links %}
+                                    <div class="col-12 mb-3">
+                                        <h6 class="text-secondary">
+                                            <i class="fas fa-link me-1"></i>Professional Links *
+                                        </h6>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="portfolio_url{{ job.id }}" class="form-label">Portfolio URL</label>
+                                        <input type="url" class="form-control" id="portfolio_url{{ job.id }}" name="portfolio_url" 
+                                               placeholder="https://yourportfolio.com">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="linkedin_url{{ job.id }}" class="form-label">LinkedIn Profile</label>
+                                        <input type="url" class="form-control" id="linkedin_url{{ job.id }}" name="linkedin_url" 
+                                               placeholder="https://linkedin.com/in/yourprofile">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="github_url{{ job.id }}" class="form-label">GitHub Profile</label>
+                                        <input type="url" class="form-control" id="github_url{{ job.id }}" name="github_url" 
+                                               placeholder="https://github.com/yourusername">
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Please provide at least one professional link when required.
+                                        </small>
+                                    </div>
+                                    {% else %}
+                                    <div class="col-12 mb-3">
+                                        <h6 class="text-secondary">
+                                            <i class="fas fa-link me-1"></i>Professional Links (Optional)
+                                        </h6>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="portfolio_url{{ job.id }}" class="form-label">Portfolio URL</label>
+                                        <input type="url" class="form-control" id="portfolio_url{{ job.id }}" name="portfolio_url" 
+                                               placeholder="https://yourportfolio.com">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="linkedin_url{{ job.id }}" class="form-label">LinkedIn Profile</label>
+                                        <input type="url" class="form-control" id="linkedin_url{{ job.id }}" name="linkedin_url" 
+                                               placeholder="https://linkedin.com/in/yourprofile">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="github_url{{ job.id }}" class="form-label">GitHub Profile</label>
+                                        <input type="url" class="form-control" id="github_url{{ job.id }}" name="github_url" 
+                                               placeholder="https://github.com/yourusername">
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Additional Information -->
+                            <div class="mb-4">
+                                <h6 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-question-circle me-2"></i>Additional Information
+                                </h6>
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label for="motivation{{ job.id }}" class="form-label">Why do you want to work here? *</label>
+                                        <textarea class="form-control" id="motivation{{ job.id }}" name="motivation" rows="3" 
+                                                  placeholder="Explain what interests you about this role and company..." required></textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="availability_date{{ job.id }}" class="form-label">Available Start Date *</label>
+                                        <input type="date" class="form-control" id="availability_date{{ job.id }}" name="availability_date" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="referred_by{{ job.id }}" class="form-label">Referred by (Optional)</label>
+                                        <input type="text" class="form-control" id="referred_by{{ job.id }}" name="referred_by" 
+                                               placeholder="Employee name if you were referred">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Legal/Consent -->
+                            <div class="mb-3">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="terms_accepted{{ job.id }}" name="terms_accepted" required>
+                                    <label class="form-check-label" for="terms_accepted{{ job.id }}">
+                                        I agree to the Terms & Conditions and confirm that all information provided is accurate. *
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="data_consent{{ job.id }}" name="data_consent" required>
+                                    <label class="form-check-label" for="data_consent{{ job.id }}">
+                                        I consent to the processing of my personal data for recruitment purposes. *
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                <small>Complete all required fields marked with (*) to submit your application successfully.</small>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -349,4 +607,45 @@
         background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
     }
 </style>
+
+<script>
+// Set minimum date to today for all availability date fields
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const availabilityInputs = document.querySelectorAll('[id^="availability_date"]');
+    availabilityInputs.forEach(input => {
+        input.min = today;
+    });
+
+    // File size validation for resume uploads
+    const resumeInputs = document.querySelectorAll('[id^="resume"]');
+    resumeInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.files[0] && this.files[0].size > 5 * 1024 * 1024) { // 5MB
+                alert('Resume file size must be less than 5MB.');
+                this.value = '';
+            }
+        });
+    });
+
+    // Portfolio links validation for required cases
+    const forms = document.querySelectorAll('form[action*="submit_application"]');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const portfolioRequired = this.querySelector('[name="portfolio_url"]')?.closest('.mb-4')?.innerHTML.includes('Professional Links *');
+            if (portfolioRequired) {
+                const portfolioUrl = this.querySelector('[name="portfolio_url"]')?.value;
+                const linkedinUrl = this.querySelector('[name="linkedin_url"]')?.value;
+                const githubUrl = this.querySelector('[name="github_url"]')?.value;
+                
+                if (!portfolioUrl && !linkedinUrl && !githubUrl) {
+                    e.preventDefault();
+                    alert('Please provide at least one professional link (Portfolio, LinkedIn, or GitHub).');
+                    return;
+                }
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -181,20 +181,64 @@
                                 <i class="fas fa-file-upload me-2"></i>Documents & Links
                             </h5>
                             <div class="row">
+                                {% if job.require_resume %}
                                 <div class="col-md-6 mb-3">
                                     <label for="resume" class="form-label">Resume/CV *</label>
                                     <input type="file" class="form-control" id="resume" name="resume" 
                                            accept=".pdf,.doc,.docx" required>
                                     <div class="form-text">PDF, DOC, or DOCX format (max 5MB)</div>
                                 </div>
+                                {% else %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="resume" class="form-label">Resume/CV (Optional)</label>
+                                    <input type="file" class="form-control" id="resume" name="resume" 
+                                           accept=".pdf,.doc,.docx">
+                                    <div class="form-text">PDF, DOC, or DOCX format (max 5MB)</div>
+                                </div>
+                                {% endif %}
+                                
                                 {% if job.require_cover_letter %}
                                 <div class="col-12 mb-3">
                                     <label for="cover_letter" class="form-label">Cover Letter *</label>
                                     <textarea class="form-control" id="cover_letter" name="cover_letter" rows="6" 
                                               placeholder="Write a personalized message explaining why you're interested in this position..." required></textarea>
                                 </div>
+                                {% else %}
+                                <div class="col-12 mb-3">
+                                    <label for="cover_letter" class="form-label">Cover Letter (Optional)</label>
+                                    <textarea class="form-control" id="cover_letter" name="cover_letter" rows="6" 
+                                              placeholder="Write a personalized message explaining why you're interested in this position..."></textarea>
+                                </div>
                                 {% endif %}
-                                {% if job.require_portfolio %}
+                                
+                                {% if job.require_portfolio_links %}
+                                <div class="col-12 mb-3">
+                                    <h6 class="text-secondary border-bottom pb-1">
+                                        <i class="fas fa-link me-1"></i>Professional Links *
+                                    </h6>
+                                    <small class="text-muted">Please provide at least one professional link.</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="portfolio_url" class="form-label">Portfolio URL</label>
+                                    <input type="url" class="form-control" id="portfolio_url" name="portfolio_url" 
+                                           placeholder="https://yourportfolio.com">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="linkedin_url" class="form-label">LinkedIn Profile</label>
+                                    <input type="url" class="form-control" id="linkedin_url" name="linkedin_url" 
+                                           placeholder="https://linkedin.com/in/yourprofile">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="github_url" class="form-label">GitHub Profile</label>
+                                    <input type="url" class="form-control" id="github_url" name="github_url" 
+                                           placeholder="https://github.com/yourusername">
+                                </div>
+                                {% else %}
+                                <div class="col-12 mb-3">
+                                    <h6 class="text-secondary border-bottom pb-1">
+                                        <i class="fas fa-link me-1"></i>Professional Links (Optional)
+                                    </h6>
+                                </div>
                                 <div class="col-md-4 mb-3">
                                     <label for="portfolio_url" class="form-label">Portfolio URL</label>
                                     <input type="url" class="form-control" id="portfolio_url" name="portfolio_url" 
@@ -282,6 +326,20 @@ document.getElementById('applicationForm').addEventListener('submit', function(e
             e.preventDefault();
             field.focus();
             alert('Please fill in all required fields.');
+            return;
+        }
+    }
+    
+    // Portfolio links validation if required
+    const portfolioRequired = this.innerHTML.includes('Professional Links *');
+    if (portfolioRequired) {
+        const portfolioUrl = document.getElementById('portfolio_url').value;
+        const linkedinUrl = document.getElementById('linkedin_url').value;
+        const githubUrl = document.getElementById('github_url').value;
+        
+        if (!portfolioUrl && !linkedinUrl && !githubUrl) {
+            e.preventDefault();
+            alert('Please provide at least one professional link (Portfolio, LinkedIn, or GitHub).');
             return;
         }
     }
