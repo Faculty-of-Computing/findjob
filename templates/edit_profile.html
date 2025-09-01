@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>
+                        Edit Profile
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" novalidate>
+                        <!-- Basic Information Section -->
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-user me-2"></i>
+                                Basic Information
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="username" class="form-label">
+                                        <i class="fas fa-user me-1"></i>
+                                        Username <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="username" 
+                                           name="username" 
+                                           value="{{ user.username }}" 
+                                           required
+                                           minlength="3"
+                                           maxlength="80">
+                                    <div class="form-text">Minimum 4 characters, maximum 80 characters</div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope me-1"></i>
+                                        Email <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="email" 
+                                           class="form-control" 
+                                           id="email" 
+                                           name="email" 
+                                           value="{{ user.email }}" 
+                                           required>
+                                    <div class="form-text">Your email address for notifications</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="full_name" class="form-label">
+                                    <i class="fas fa-id-card me-1"></i>
+                                    Full Name
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="full_name" 
+                                       name="full_name" 
+                                       value="{{ user.full_name or '' }}"
+                                       maxlength="100">
+                                <div class="form-text">Your full name (optional)</div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-address-book me-2"></i>
+                                Contact Information
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone" class="form-label">
+                                        <i class="fas fa-phone me-1"></i>
+                                        Phone Number
+                                    </label>
+                                    <input type="tel" 
+                                           class="form-control" 
+                                           id="phone" 
+                                           name="phone" 
+                                           value="{{ user.phone or '' }}"
+                                           maxlength="20">
+                                    <div class="form-text">Your contact phone number (optional)</div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="location" class="form-label">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        Location
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="location" 
+                                           name="location" 
+                                           value="{{ user.location or '' }}"
+                                           maxlength="100"
+                                           placeholder="City, Country">
+                                    <div class="form-text">Your current location (optional)</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="bio" class="form-label">
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    Bio / About Me
+                                </label>
+                                <textarea class="form-control" 
+                                          id="bio" 
+                                          name="bio" 
+                                          rows="4"
+                                          maxlength="500"
+                                          placeholder="Tell us about yourself...">{{ user.bio or '' }}</textarea>
+                                <div class="form-text">Brief description about yourself (optional, max 500 characters)</div>
+                            </div>
+                        </div>
+
+                        <!-- Password Change Section -->
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-key me-2"></i>
+                                Change Password
+                            </h5>
+                            <p class="text-muted small">Leave password fields empty if you don't want to change your password.</p>
+                            
+                            <div class="mb-3">
+                                <label for="current_password" class="form-label">
+                                    <i class="fas fa-lock me-1"></i>
+                                    Current Password
+                                </label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="current_password" 
+                                       name="current_password">
+                                <div class="form-text">Required only if changing password</div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="new_password" class="form-label">
+                                        <i class="fas fa-key me-1"></i>
+                                        New Password
+                                    </label>
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="new_password" 
+                                           name="new_password"
+                                           minlength="6">
+                                    <div class="form-text">Minimum 6 characters</div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="confirm_password" class="form-label">
+                                        <i class="fas fa-check me-1"></i>
+                                        Confirm New Password
+                                    </label>
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="confirm_password" 
+                                           name="confirm_password"
+                                           minlength="6">
+                                    <div class="form-text">Must match new password</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.profile') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                Update Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Client-side validation script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const newPassword = document.getElementById('new_password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const currentPassword = document.getElementById('current_password');
+
+    // Password confirmation validation
+    function validatePassword() {
+        if (newPassword.value && confirmPassword.value) {
+            if (newPassword.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity('Passwords do not match');
+            } else {
+                confirmPassword.setCustomValidity('');
+            }
+        }
+    }
+
+    newPassword.addEventListener('input', validatePassword);
+    confirmPassword.addEventListener('input', validatePassword);
+
+    // Require current password if new password is entered
+    newPassword.addEventListener('input', function() {
+        if (this.value) {
+            currentPassword.required = true;
+        } else {
+            currentPassword.required = false;
+        }
+    });
+
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        if (newPassword.value && !currentPassword.value) {
+            e.preventDefault();
+            alert('Current password is required to change password.');
+            currentPassword.focus();
+        }
+    });
+});
+</script>
+{% endblock %}
