@@ -24,7 +24,7 @@ if __name__ == '__main__':
     # Get environment variables with Render defaults
     host = '0.0.0.0'  # Bind to all interfaces
     port = int(os.environ.get('PORT', 5000))  # Render provides PORT environment variable
-    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'  # Default to False in production
+    debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'  # Default to False in production
     env = os.environ.get('FLASK_ENV', 'development')
 
     logger.info(f"Starting FindJob application...")
