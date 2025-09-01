@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Welcome Message for Auto-Login -->
+    {% if session.get('user_id') %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-shield-alt"></i>
+                <strong>Admin Access Granted</strong> - {{ session.get('username', 'Administrator') }}
+                <br><small>You have full system administration privileges.</small>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Dashboard Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-cogs"></i> System Administration</h1>
+        <div class="btn-group">
+            {% if user_permissions.get('manage_users', False) %}
+            <a href="{{ url_for('main.create_admin') }}" class="btn btn-warning">
+                <i class="fas fa-user-plus"></i> Create Admin
+            </a>
+            {% endif %}
+            <a href="{{ url_for('main.jobs') }}" class="btn btn-outline-primary">
+                <i class="fas fa-eye"></i> View Jobs
+            </a>
+        </div>
+    </div>
+    
+    <!-- System Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-header">
+                    <i class="fas fa-users"></i> Total Users
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{ stats.get('total_users', 0) }}</h4>
+                    <p class="card-text">Registered users</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-header">
+                    <i class="fas fa-briefcase"></i> Total Jobs
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{ stats.get('total_jobs', 0) }}</h4>
+                    <p class="card-text">Job postings</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-header">
+                    <i class="fas fa-file-alt"></i> Applications
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{ stats.get('total_applications', 0) }}</h4>
+                    <p class="card-text">Job applications</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-header">
+                    <i class="fas fa-user-shield"></i> Admin Users
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{ admin_data.get('total_admins', 0) }}</h4>
+                    <p class="card-text">System administrators</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Management Section -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line"></i> System Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>User Distribution</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Job Seekers</span>
+                                    <span class="badge bg-primary">{{ stats.get('seekers_count', 0) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Employers</span>
+                                    <span class="badge bg-success">{{ stats.get('employers_count', 0) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Administrators</span>
+                                    <span class="badge bg-warning">{{ admin_data.get('total_admins', 0) }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>System Health</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Database Status</span>
+                                    <span class="badge bg-success">{{ admin_data.system_health.database_status }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Active Sessions</span>
+                                    <span class="badge bg-info">{{ admin_data.system_health.active_sessions }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Last Backup</span>
+                                    <span class="badge bg-secondary">{{ admin_data.system_health.last_backup }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history"></i> Recent Admin Activities</h5>
+                </div>
+                <div class="card-body">
+                    {% if admin_data.recent_admin_activities %}
+                        {% for activity in admin_data.recent_admin_activities %}
+                        <div class="mb-3 p-2 border-start border-3 border-primary">
+                            <strong>{{ activity.username }}</strong>
+                            <br>
+                            <small class="text-muted">{{ activity.action }}</small>
+                            <br>
+                            <small class="text-muted">{{ activity.date.strftime('%Y-%m-%d %H:%M') if activity.date else 'N/A' }}</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No recent activities</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if user_permissions.get('manage_users', False) %}
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('main.create_admin') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-user-plus"></i> Create Admin
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('main.manage_users') }}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-users-cog"></i> Manage Users
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% if user_permissions.get('manage_jobs', False) %}
+                        <div class="col-md-3 mb-2">
+                            <a href="#" class="btn btn-outline-success w-100">
+                                <i class="fas fa-briefcase"></i> Manage Jobs
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% if user_permissions.get('view_reports', False) %}
+                        <div class="col-md-3 mb-2">
+                            <a href="#" class="btn btn-outline-info w-100">
+                                <i class="fas fa-chart-bar"></i> View Reports
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Your Permissions -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-key"></i> Your Permissions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for permission, has_access in user_permissions.items() %}
+                        <div class="col-md-4 mb-2">
+                            <span class="badge {% if has_access %}bg-success{% else %}bg-secondary{% endif %} w-100 p-2">
+                                <i class="fas {% if has_access %}fa-check{% else %}fa-times{% endif %}"></i>
+                                {{ permission.replace('_', ' ').title() }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
