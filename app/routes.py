@@ -159,6 +159,7 @@ def post_job():
             
         except Exception as e:
             db.session.rollback()
+            print(f"Error saving job: {e}")  # Log the actual error
             flash('An error occurred while saving the job. Please try again.', 'error')
             return render_template('post_job.html')
     
