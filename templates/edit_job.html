@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Job - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-gradient-primary text-white text-center py-4">
+                    <h2 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Job Posting
+                    </h2>
+                    <p class="mb-0 opacity-75">
+                        {% if job.is_draft %}
+                            Editing Draft: {{ job.title }}
+                        {% else %}
+                            Editing Published Job: {{ job.title }}
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('main.edit_job', job_id=job.id) }}" id="editJobForm">
+                        <!-- Basic Job Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-info-circle me-2"></i>Job Information
+                                </h5>
+                            </div>
+                        </div>
+
+                        <!-- Job Title -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="title" class="form-label">
+                                    <i class="fas fa-briefcase me-1"></i>Job Title *
+                                </label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ job.title }}" placeholder="e.g. Senior Software Developer" maxlength="200" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="company_name" class="form-label">
+                                    <i class="fas fa-building me-1"></i>Company Name *
+                                </label>
+                                <input type="text" class="form-control" id="company_name" name="company_name" 
+                                       value="{{ job.company_name }}" placeholder="e.g. TechCorp Inc." maxlength="100" required>
+                            </div>
+                        </div>
+
+                        <!-- Location & Job Type -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="location" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Location *
+                                </label>
+                                <input type="text" class="form-control" id="location" name="location" 
+                                       value="{{ job.location }}" placeholder="e.g. Remote, New York, NY" maxlength="100" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="job_type" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>Job Type *
+                                </label>
+                                <select class="form-select" id="job_type" name="job_type" required>
+                                    <option value="full-time" {% if job.job_type == 'full-time' %}selected{% endif %}>Full-time</option>
+                                    <option value="part-time" {% if job.job_type == 'part-time' %}selected{% endif %}>Part-time</option>
+                                    <option value="contract" {% if job.job_type == 'contract' %}selected{% endif %}>Contract</option>
+                                    <option value="internship" {% if job.job_type == 'internship' %}selected{% endif %}>Internship</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Salary Range -->
+                        <div class="mb-3">
+                            <label for="salary_range" class="form-label">
+                                <i class="fas fa-dollar-sign me-1"></i>Salary Range
+                            </label>
+                            <input type="text" class="form-control" id="salary_range" name="salary_range" 
+                                   value="{{ job.salary_range or '' }}" placeholder="e.g. $70,000 - $90,000" maxlength="50">
+                        </div>
+
+                        <!-- Job Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>Job Description *
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="8" 
+                                      placeholder="Describe the position, responsibilities, requirements, and benefits..." required>{{ job.description }}</textarea>
+                        </div>
+
+                        <!-- Application Requirements -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-clipboard-check me-2"></i>Application Requirements
+                                </h5>
+                            </div>
+                        </div>
+
+                        <!-- Required Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_phone" name="require_phone" {% if job.require_phone %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_phone">Require Phone Number</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_address" name="require_address" {% if job.require_address %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_address">Require Address</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_work_authorization" name="require_work_authorization" {% if job.require_work_authorization %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_work_authorization">Require Work Authorization Status</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_experience_years" name="require_experience_years" {% if job.require_experience_years %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_experience_years">Require Years of Experience</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_expected_salary" name="require_expected_salary" {% if job.require_expected_salary %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_expected_salary">Ask for Expected Salary</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_education" name="require_education" {% if job.require_education %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_education">Require Education Details</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skills & Portfolio Requirements -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_skills" name="require_skills" {% if job.require_skills %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_skills">Require Skills Information</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_cover_letter" name="require_cover_letter" {% if job.require_cover_letter %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_cover_letter">Require Cover Letter</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_resume" name="require_resume" {% if job.require_resume %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_resume">Require Resume/CV Upload</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_portfolio_links" name="require_portfolio_links" {% if job.require_portfolio_links %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_portfolio_links">Require Portfolio/LinkedIn/GitHub Links</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Job Status -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-toggle-on me-2"></i>Job Status
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if job.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    <strong>
+                                        {% if job.is_draft %}
+                                            Publish job posting
+                                        {% else %}
+                                            Keep job posting active
+                                        {% endif %}
+                                    </strong>
+                                    <br><small class="text-muted">
+                                        {% if job.is_draft %}
+                                            Check to publish, uncheck to keep as draft
+                                        {% else %}
+                                            Uncheck to deactivate this job posting
+                                        {% endif %}
+                                    </small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                            <a href="{{ url_for('main.employer_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+</style>
+{% endblock %}
