@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-primary">
+                    <i class="fas fa-cogs me-2"></i>
+                    Admin Dashboard
+                </h2>
+                <span class="badge bg-danger fs-6">Administrator</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center h-100 shadow-sm border-primary">
+                <div class="card-body">
+                    <i class="fas fa-users text-primary fs-1 mb-3"></i>
+                    <h4 class="card-title">{{ stats.total_users or 0 }}</h4>
+                    <p class="card-text text-muted">Total Users</p>
+                    <small class="text-success">
+                        <i class="fas fa-arrow-up"></i>
+                        {{ stats.new_users_this_month or 0 }} this month
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100 shadow-sm border-info">
+                <div class="card-body">
+                    <i class="fas fa-briefcase text-info fs-1 mb-3"></i>
+                    <h4 class="card-title">{{ stats.total_jobs or 0 }}</h4>
+                    <p class="card-text text-muted">Active Jobs</p>
+                    <small class="text-success">
+                        <i class="fas fa-arrow-up"></i>
+                        {{ stats.new_jobs_this_month or 0 }} this month
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100 shadow-sm border-warning">
+                <div class="card-body">
+                    <i class="fas fa-paper-plane text-warning fs-1 mb-3"></i>
+                    <h4 class="card-title">{{ stats.total_applications or 0 }}</h4>
+                    <p class="card-text text-muted">Applications</p>
+                    <small class="text-success">
+                        <i class="fas fa-arrow-up"></i>
+                        {{ stats.new_applications_this_month or 0 }} this month
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100 shadow-sm border-success">
+                <div class="card-body">
+                    <i class="fas fa-building text-success fs-1 mb-3"></i>
+                    <h4 class="card-title">{{ stats.total_employers or 0 }}</h4>
+                    <p class="card-text text-muted">Employers</p>
+                    <small class="text-info">
+                        {{ stats.active_employers or 0 }} active
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-friends me-2"></i>
+                        Recent Users
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if stats.recent_users %}
+                                    {% for user in stats.recent_users %}
+                                    <tr>
+                                        <td>{{ user.username }}</td>
+                                        <td>
+                                            {% if user.role == 'seeker' %}
+                                                <span class="badge bg-info">Seeker</span>
+                                            {% elif user.role == 'employer' %}
+                                                <span class="badge bg-success">Employer</span>
+                                            {% elif user.role == 'admin' %}
+                                                <span class="badge bg-danger">Admin</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ user.created_at.strftime('%m/%d/%Y') }}</td>
+                                        <td>
+                                            {% if user.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No recent users</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center">
+                        <a href="#" class="btn btn-outline-primary btn-sm">View All Users</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-briefcase me-2"></i>
+                        Recent Jobs
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Job Title</th>
+                                    <th>Company</th>
+                                    <th>Posted</th>
+                                    <th>Apps</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if stats.recent_jobs %}
+                                    {% for job in stats.recent_jobs %}
+                                    <tr>
+                                        <td>{{ job.title[:30] }}{% if job.title|length > 30 %}...{% endif %}</td>
+                                        <td>{{ job.company_name }}</td>
+                                        <td>{{ job.posted_date.strftime('%m/%d/%Y') }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ job.application_count }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No recent jobs</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center">
+                        <a href="#" class="btn btn-outline-info btn-sm">View All Jobs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health and Activity -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Activity Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h4 class="text-primary">{{ stats.applications_today or 0 }}</h4>
+                            <p class="text-muted">Applications Today</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-success">{{ stats.jobs_posted_today or 0 }}</h4>
+                            <p class="text-muted">Jobs Posted Today</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-info">{{ stats.new_users_today or 0 }}</h4>
+                            <p class="text-muted">New Users Today</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-users me-2"></i>
+                            Manage Users
+                        </a>
+                        <a href="#" class="btn btn-outline-info">
+                            <i class="fas fa-briefcase me-2"></i>
+                            Review Jobs
+                        </a>
+                        <a href="#" class="btn btn-outline-warning">
+                            <i class="fas fa-flag me-2"></i>
+                            View Reports
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="fas fa-cog me-2"></i>
+                            System Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
