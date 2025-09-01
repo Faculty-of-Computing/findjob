@@ -96,7 +96,8 @@ def post_job():
         require_education = bool(request.form.get('require_education'))
         require_skills = bool(request.form.get('require_skills'))
         require_cover_letter = bool(request.form.get('require_cover_letter'))
-        require_portfolio = bool(request.form.get('require_portfolio'))
+        require_resume = bool(request.form.get('require_resume'))
+        require_portfolio_links = bool(request.form.get('require_portfolio_links'))
         is_active = bool(request.form.get('is_active'))
         
         # Basic validation
@@ -135,7 +136,8 @@ def post_job():
                 require_education=require_education,
                 require_skills=require_skills,
                 require_cover_letter=require_cover_letter,
-                require_portfolio=require_portfolio
+                require_resume=require_resume,
+                require_portfolio_links=require_portfolio_links
             )
             
             db.session.add(new_job)
