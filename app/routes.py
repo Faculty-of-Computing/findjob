@@ -98,24 +98,29 @@ def post_job():
         require_cover_letter = bool(request.form.get('require_cover_letter'))
         require_resume = bool(request.form.get('require_resume'))
         require_portfolio_links = bool(request.form.get('require_portfolio_links'))
-        is_active = bool(request.form.get('is_active'))
         
-        # Basic validation
+        # Determine if saving as draft or publishing
+        is_active = bool(request.form.get('is_active'))
+        is_draft = not is_active
+        
+        # Basic validation - always required even for drafts
         if not title:
             flash('Job title is required.', 'error')
             return render_template('post_job.html')
         
-        if not description:
-            flash('Job description is required.', 'error')
-            return render_template('post_job.html')
-        
-        if not company_name:
-            flash('Company name is required.', 'error')
-            return render_template('post_job.html')
-        
-        if not location:
-            flash('Location is required.', 'error')
-            return render_template('post_job.html')
+        # For publishing, require all mandatory fields
+        if not is_draft:
+            if not description:
+                flash('Job description is required for publishing.', 'error')
+                return render_template('post_job.html')
+            
+            if not company_name:
+                flash('Company name is required for publishing.', 'error')
+                return render_template('post_job.html')
+            
+            if not location:
+                flash('Location is required for publishing.', 'error')
+                return render_template('post_job.html')
         
         try:
             # Create new job posting
@@ -127,7 +132,6 @@ def post_job():
                 salary_range=salary_range if salary_range else None,
                 job_type=job_type,
                 employer_id=session['user_id'],
-                is_active=is_active,
                 require_phone=require_phone,
                 require_address=require_address,
                 require_work_authorization=require_work_authorization,
@@ -137,7 +141,11 @@ def post_job():
                 require_skills=require_skills,
                 require_cover_letter=require_cover_letter,
                 require_resume=require_resume,
-                require_portfolio_links=require_portfolio_links
+                require_portfolio_links=require_portfolio_links,
+                is_active=is_active,
+                is_draft=is_draft,
+                draft_saved_at=datetime.utcnow(),
+                published_at=datetime.utcnow() if is_active else None
             )
             
             db.session.add(new_job)
@@ -146,12 +154,12 @@ def post_job():
             if is_active:
                 flash('Job posted successfully and is now live!', 'success')
             else:
-                flash('Job saved as draft successfully!', 'success')
+                flash('Job saved as draft successfully! You can publish it later from your dashboard.', 'success')
             return redirect(url_for('main.employer_dashboard'))
             
         except Exception as e:
             db.session.rollback()
-            flash('An error occurred while posting the job. Please try again.', 'error')
+            flash('An error occurred while saving the job. Please try again.', 'error')
             return render_template('post_job.html')
     
     return render_template('post_job.html')
@@ -866,3 +874,150 @@ def internal_error(error):
     """Handle 500 errors"""
     db.session.rollback()
     return render_template('errors/500.html'), 500
+
+@main.route('/edit_job/<int:job_id>', methods=['GET', 'POST'])
+def edit_job(job_id):
+    """Edit job posting (for drafts or published jobs)"""
+    if not is_logged_in():
+        flash('Please log in to edit jobs.', 'error')
+        return redirect(url_for('main.login'))
+    
+    if session.get('user_role') != 'employer':
+        flash('Only employers can edit jobs.', 'error')
+        return redirect(url_for('main.jobs'))
+    
+    job = JobPosting.query.filter_by(id=job_id, employer_id=session['user_id']).first()
+    if not job:
+        flash('Job not found or you do not have permission to edit it.', 'error')
+        return redirect(url_for('main.employer_dashboard'))
+    
+    if request.method == 'POST':
+        # Update job details
+        job.title = request.form.get('title', '').strip()
+        job.description = request.form.get('description', '').strip()
+        job.company_name = request.form.get('company_name', '').strip()
+        job.location = request.form.get('location', '').strip()
+        job.salary_range = request.form.get('salary_range', '').strip()
+        job.job_type = request.form.get('job_type', 'full-time')
+        
+        # Update requirements
+        job.require_phone = bool(request.form.get('require_phone'))
+        job.require_address = bool(request.form.get('require_address'))
+        job.require_work_authorization = bool(request.form.get('require_work_authorization'))
+        job.require_experience_years = bool(request.form.get('require_experience_years'))
+        job.require_expected_salary = bool(request.form.get('require_expected_salary'))
+        job.require_education = bool(request.form.get('require_education'))
+        job.require_skills = bool(request.form.get('require_skills'))
+        job.require_cover_letter = bool(request.form.get('require_cover_letter'))
+        job.require_resume = bool(request.form.get('require_resume'))
+        job.require_portfolio_links = bool(request.form.get('require_portfolio_links'))
+        
+        # Handle publishing/draft status
+        is_active = bool(request.form.get('is_active'))
+        was_draft = job.is_draft
+        
+        job.is_active = is_active
+        job.is_draft = not is_active
+        job.draft_saved_at = datetime.utcnow()
+        
+        # If publishing for the first time, set published_at
+        if is_active and was_draft:
+            job.published_at = datetime.utcnow()
+        
+        # Validation for publishing
+        if not job.is_draft:
+            if not job.title:
+                flash('Job title is required for publishing.', 'error')
+                return render_template('edit_job.html', job=job)
+            
+            if not job.description:
+                flash('Job description is required for publishing.', 'error')
+                return render_template('edit_job.html', job=job)
+            
+            if not job.company_name:
+                flash('Company name is required for publishing.', 'error')
+                return render_template('edit_job.html', job=job)
+            
+            if not job.location:
+                flash('Location is required for publishing.', 'error')
+                return render_template('edit_job.html', job=job)
+        
+        try:
+            db.session.commit()
+            
+            if is_active and was_draft:
+                flash('Job published successfully!', 'success')
+            elif is_active:
+                flash('Job updated successfully!', 'success')
+            else:
+                flash('Job saved as draft successfully!', 'success')
+            
+            return redirect(url_for('main.employer_dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred while updating the job. Please try again.', 'error')
+    
+    return render_template('edit_job.html', job=job)
+
+@main.route('/publish_job/<int:job_id>', methods=['POST'])
+def publish_job(job_id):
+    """Publish a draft job"""
+    if not is_logged_in():
+        flash('Please log in to publish jobs.', 'error')
+        return redirect(url_for('main.login'))
+    
+    if session.get('user_role') != 'employer':
+        flash('Only employers can publish jobs.', 'error')
+        return redirect(url_for('main.jobs'))
+    
+    job = JobPosting.query.filter_by(id=job_id, employer_id=session['user_id'], is_draft=True).first()
+    if not job:
+        flash('Draft job not found.', 'error')
+        return redirect(url_for('main.employer_dashboard'))
+    
+    # Validate required fields before publishing
+    if not job.title or not job.description or not job.company_name or not job.location:
+        flash('Please complete all required fields before publishing.', 'error')
+        return redirect(url_for('main.edit_job', job_id=job_id))
+    
+    try:
+        job.is_active = True
+        job.is_draft = False
+        job.published_at = datetime.utcnow()
+        
+        db.session.commit()
+        flash('Job published successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('An error occurred while publishing the job.', 'error')
+    
+    return redirect(url_for('main.employer_dashboard'))
+
+@main.route('/delete_job/<int:job_id>', methods=['POST'])
+def delete_job(job_id):
+    """Delete a job posting"""
+    if not is_logged_in():
+        flash('Please log in to delete jobs.', 'error')
+        return redirect(url_for('main.login'))
+    
+    if session.get('user_role') != 'employer':
+        flash('Only employers can delete jobs.', 'error')
+        return redirect(url_for('main.jobs'))
+    
+    job = JobPosting.query.filter_by(id=job_id, employer_id=session['user_id']).first()
+    if not job:
+        flash('Job not found.', 'error')
+        return redirect(url_for('main.employer_dashboard'))
+    
+    try:
+        db.session.delete(job)
+        db.session.commit()
+        flash('Job deleted successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('An error occurred while deleting the job.', 'error')
+    
+    return redirect(url_for('main.employer_dashboard'))
