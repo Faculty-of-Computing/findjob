@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Home - FindJob{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto text-center">
+        <h1 class="display-4 text-primary mb-4 animate-fade-in">Welcome to FindJob</h1>
+        <p class="lead mb-4 animate-fade-in">
+            Find your dream job or post opportunities for talented professionals. 
+            Our platform connects job seekers with employers across various industries and locations.
+        </p>
+        
+        <!-- Statistics Cards -->
+        <div class="row mt-5">
+            <div class="col-md-6 mb-4">
+                <div class="card border-primary stats-card" data-bs-toggle="tooltip" title="Total active job opportunities">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary counter" data-target="{{ total_jobs }}">0</h5>
+                        <p class="card-text">Active Job Postings</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card border-success stats-card" data-bs-toggle="tooltip" title="Total registered users">
+                    <div class="card-body">
+                        <h5 class="card-title text-success counter" data-target="{{ total_users }}">0</h5>
+                        <p class="card-text">Registered Users</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Call to Action Buttons -->
+        <div class="row mt-4">
+            <div class="col-md-6 mb-3">
+                <a href="{{ url_for('main.jobs') }}" class="btn btn-primary btn-lg w-100 cta-button">
+                    <i class="fas fa-search me-2"></i>Browse Jobs
+                </a>
+            </div>
+            <div class="col-md-6 mb-3">
+                <a href="{{ url_for('main.register') }}" class="btn btn-outline-primary btn-lg w-100 cta-button">
+                    <i class="fas fa-user-plus me-2"></i>Get Started
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Why Choose FindJob?</h2>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="text-center feature-card">
+            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center feature-icon" style="width: 60px; height: 60px;">
+                <i class="fas fa-search"></i>
+            </div>
+            <h5 class="mt-3">Easy Job Search</h5>
+            <p class="text-muted">Find relevant opportunities with our user-friendly search and filtering system.</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="text-center feature-card">
+            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center feature-icon" style="width: 60px; height: 60px;">
+                <i class="fas fa-users"></i>
+            </div>
+            <h5 class="mt-3">Connect Professionals</h5>
+            <p class="text-muted">Bridge the gap between talented job seekers and forward-thinking employers.</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="text-center feature-card">
+            <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center feature-icon" style="width: 60px; height: 60px;">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h5 class="mt-3">Track Applications</h5>
+            <p class="text-muted">Monitor your job applications and manage hiring processes efficiently.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
