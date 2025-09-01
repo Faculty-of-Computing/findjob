@@ -3,130 +3,200 @@
 {% block title %}Post a Job - FindJob{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow-lg border-0 rounded-3 post-job-card">
-            <div class="card-header bg-gradient-primary text-white text-center py-4">
-                <h2 class="card-title mb-0">
-                    <i class="fas fa-plus-circle me-2"></i>Post a New Job
-                </h2>
-                <p class="mb-0 opacity-75">Share your opportunity with job seekers</p>
-            </div>
-            
-            <div class="card-body p-4">
-                <form method="POST" action="{{ url_for('main.post_job') }}" id="postJobForm" class="post-job-form">
-                    <!-- Job Title -->
-                    <div class="mb-3">
-                        <label for="title" class="form-label">
-                            <i class="fas fa-briefcase me-1"></i>Job Title *
-                        </label>
-                        <input type="text" 
-                               class="form-control form-control-lg" 
-                               id="title" 
-                               name="title" 
-                               placeholder="e.g. Senior Software Developer"
-                               maxlength="200"
-                               required>
-                        <div class="form-text">
-                            <i class="fas fa-info-circle me-1"></i>Maximum 200 characters
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-gradient-primary text-white text-center py-4">
+                    <h2 class="card-title mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>Post a New Job
+                    </h2>
+                    <p class="mb-0 opacity-75">Share your opportunity with job seekers</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('main.post_job') }}" id="postJobForm">
+                        <!-- Basic Job Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-info-circle me-2"></i>Job Information
+                                </h5>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Company Name -->
-                    <div class="mb-3">
-                        <label for="company_name" class="form-label">
-                            <i class="fas fa-building me-1"></i>Company Name
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="company_name" 
-                               name="company_name" 
-                               placeholder="e.g. TechCorp Inc."
-                               maxlength="100">
-                    </div>
-
-                    <!-- Location -->
-                    <div class="mb-3">
-                        <label for="location" class="form-label">
-                            <i class="fas fa-map-marker-alt me-1"></i>Location
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="location" 
-                               name="location" 
-                               placeholder="e.g. Remote, New York, NY"
-                               maxlength="100">
-                    </div>
-
-                    <!-- Job Type -->
-                    <div class="mb-3">
-                        <label for="job_type" class="form-label">
-                            <i class="fas fa-clock me-1"></i>Job Type
-                        </label>
-                        <select class="form-select" id="job_type" name="job_type">
-                            <option value="full-time" selected>Full-time</option>
-                            <option value="part-time">Part-time</option>
-                            <option value="contract">Contract</option>
-                            <option value="internship">Internship</option>
-                        </select>
-                    </div>
-
-                    <!-- Salary Range -->
-                    <div class="mb-3">
-                        <label for="salary_range" class="form-label">
-                            <i class="fas fa-dollar-sign me-1"></i>Salary Range
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="salary_range" 
-                               name="salary_range" 
-                               placeholder="e.g. $70,000 - $90,000"
-                               maxlength="50">
-                    </div>
-
-                    <!-- Job Description -->
-                    <div class="mb-4">
-                        <label for="description" class="form-label">
-                            <i class="fas fa-file-alt me-1"></i>Job Description *
-                        </label>
-                        <textarea class="form-control" 
-                                  id="description" 
-                                  name="description" 
-                                  rows="8" 
-                                  placeholder="Describe the position, responsibilities, requirements, and benefits..."
-                                  required></textarea>
-                        <div class="form-text">
-                            <i class="fas fa-lightbulb me-1"></i>Include job responsibilities, required skills, qualifications, and company benefits
+                        <!-- Job Title -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="title" class="form-label">
+                                    <i class="fas fa-briefcase me-1"></i>Job Title *
+                                </label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       placeholder="e.g. Senior Software Developer" maxlength="200" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="company_name" class="form-label">
+                                    <i class="fas fa-building me-1"></i>Company Name *
+                                </label>
+                                <input type="text" class="form-control" id="company_name" name="company_name" 
+                                       placeholder="e.g. TechCorp Inc." maxlength="100" required>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Submit Button -->
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-paper-plane me-2"></i>Post Job
-                        </button>
-                        <a href="{{ url_for('main.jobs') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Cancel
-                        </a>
-                    </div>
-                </form>
+                        <!-- Location & Job Type -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="location" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Location *
+                                </label>
+                                <input type="text" class="form-control" id="location" name="location" 
+                                       placeholder="e.g. Remote, New York, NY" maxlength="100" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="job_type" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>Job Type *
+                                </label>
+                                <select class="form-select" id="job_type" name="job_type" required>
+                                    <option value="full-time" selected>Full-time</option>
+                                    <option value="part-time">Part-time</option>
+                                    <option value="contract">Contract</option>
+                                    <option value="internship">Internship</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Salary Range -->
+                        <div class="mb-3">
+                            <label for="salary_range" class="form-label">
+                                <i class="fas fa-dollar-sign me-1"></i>Salary Range
+                            </label>
+                            <input type="text" class="form-control" id="salary_range" name="salary_range" 
+                                   placeholder="e.g. $70,000 - $90,000" maxlength="50">
+                        </div>
+
+                        <!-- Job Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>Job Description *
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="8" 
+                                      placeholder="Describe the position, responsibilities, requirements, and benefits..." required></textarea>
+                        </div>
+
+                        <!-- Application Requirements -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-clipboard-check me-2"></i>Application Requirements
+                                </h5>
+                            </div>
+                        </div>
+
+                        <!-- Required Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_phone" name="require_phone">
+                                    <label class="form-check-label" for="require_phone">Require Phone Number</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_address" name="require_address">
+                                    <label class="form-check-label" for="require_address">Require Address</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_work_authorization" name="require_work_authorization">
+                                    <label class="form-check-label" for="require_work_authorization">Require Work Authorization Status</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_experience_years" name="require_experience_years">
+                                    <label class="form-check-label" for="require_experience_years">Require Years of Experience</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_expected_salary" name="require_expected_salary">
+                                    <label class="form-check-label" for="require_expected_salary">Ask for Expected Salary</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_education" name="require_education">
+                                    <label class="form-check-label" for="require_education">Require Education Details</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skills & Portfolio Requirements -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_skills" name="require_skills">
+                                    <label class="form-check-label" for="require_skills">Require Skills Information</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_cover_letter" name="require_cover_letter">
+                                    <label class="form-check-label" for="require_cover_letter">Require Cover Letter</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="require_portfolio" name="require_portfolio">
+                                    <label class="form-check-label" for="require_portfolio">Require Portfolio/LinkedIn/GitHub</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Job Status -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-toggle-on me-2"></i>Job Status
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                <label class="form-check-label" for="is_active">
+                                    <strong>Activate job posting immediately</strong>
+                                    <br><small class="text-muted">Uncheck to save as draft</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i>Post Job
+                            </button>
+                            <a href="{{ url_for('main.employer_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- Additional Info -->
-        <div class="text-center mt-4">
-            <div class="card border-0 bg-light">
-                <div class="card-body py-3">
-                    <h6 class="text-muted mb-2">
-                        <i class="fas fa-info-circle me-1"></i>Posting Guidelines
-                    </h6>
-                    <p class="text-muted small mb-0">
-                        Please provide clear and detailed job descriptions to attract qualified candidates. 
-                        All job postings are subject to review and must comply with our community guidelines.
-                    </p>
+            <!-- Guidelines -->
+            <div class="text-center mt-4">
+                <div class="card border-0 bg-light">
+                    <div class="card-body py-3">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-info-circle me-1"></i>Posting Guidelines
+                        </h6>
+                        <p class="text-muted small mb-0">
+                            Please provide clear and detailed job descriptions to attract qualified candidates. 
+                            All job postings are subject to review and must comply with our community guidelines.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+</style>
 {% endblock %}
