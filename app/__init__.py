@@ -16,10 +16,19 @@ def create_app():
                 template_folder=template_dir,
                 static_folder=static_dir)
     
-    # Configure the app
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///findjob.db'
+    # Configure the app for production/development
+    if os.environ.get('FLASK_ENV') == 'production':
+        # Production configuration
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///findjob.db')
+        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bvaIbwm7Ctm2Gf2CZUUfaHU--qYbVUknAEwGcAcP_qs=')
+        app.config['DEBUG'] = False
+    else:
+        # Development configuration
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///findjob.db'
+        app.config['SECRET_KEY'] = 'bvaIbwm7Ctm2Gf2CZUUfaHU--qYbVUknAEwGcAcP_qs='
+        app.config['DEBUG'] = True
+    
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = 'bvaIbwm7Ctm2Gf2CZUUfaHU--qYbVUknAEwGcAcP_qs='
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30) # After 30 days user login expires
 
     # Add custom Jinja2 filters to the app
@@ -28,8 +37,8 @@ def create_app():
         """Convert newlines to HTML line breaks"""
         if text is None:
             return ''
-        return text.replace('\n', '<br>\n')
-    
+        return text.replace('\n', '<br>')
+
     # Initialize SQLAlchemy with the app
     db.init_app(app)
     
@@ -43,6 +52,6 @@ def create_app():
     # Create tables within app context
     with app.app_context():
         db.create_all()
-        print("Database tables created successfully with SQLite3!")
+        print("Database tables created successfully!")
     
     return app
