@@ -3,6 +3,7 @@ from app.models import db, User, JobPosting, Application
 from werkzeug.security import check_password_hash
 from datetime import datetime
 import json
+from sqlalchemy import func
 
 # Create a blueprint for main routes
 main = Blueprint('main', __name__)
@@ -38,14 +39,19 @@ def validate_session_and_redirect():
 # Update the home route to handle auto-redirect for logged-in users
 @main.route('/')
 def home():
-    """Homepage route - displays welcome message and overview"""
-    # Auto-redirect logged-in users to their dashboard
-    dashboard_redirect = validate_session_and_redirect()
-    if dashboard_redirect:
-        return dashboard_redirect
-    
-    # Show homepage for non-logged-in users
-    return render_template('home.html')
+    """Home page with statistics"""
+    try:
+        stats = User.get_system_overview()
+        return render_template('home.html', 
+                             total_users=stats['total_users'],
+                             total_jobs=stats['total_jobs'],
+                             total_applications=stats['total_applications'])
+    except Exception as e:
+        print(f"Error getting home statistics: {e}")
+        return render_template('home.html', 
+                             total_users=0,
+                             total_jobs=0,
+                             total_applications=0)
 
 @main.route('/jobs')
 def jobs():
@@ -119,56 +125,134 @@ def post_job():
     
     return render_template('post_job.html')
 
-@main.route('/apply_job/<int:job_id>', methods=['POST'])
-def apply_job(job_id):
-    """Job application route - allows seekers to apply for jobs"""
-    # Check if user is logged in
+@main.route('/apply/<int:job_id>')
+def apply_job_form(job_id):
+    """Display application form for a specific job"""
     if not is_logged_in():
         flash('Please log in to apply for jobs.', 'error')
         return redirect(url_for('main.login'))
     
-    # Check if user is a seeker
     if session.get('user_role') != 'seeker':
-        flash('Only job seekers can apply for jobs. Please register as a job seeker.', 'error')
+        flash('Only job seekers can apply for jobs.', 'error')
         return redirect(url_for('main.jobs'))
     
-    # Check if job exists and is active
     job = JobPosting.query.filter_by(id=job_id, is_active=True).first()
     if not job:
         flash('Job not found or no longer active.', 'error')
         return redirect(url_for('main.jobs'))
     
-    # Check if user already applied for this job
+    # Check if already applied
     existing_application = Application.query.filter_by(
-        job_id=job_id, 
-        seeker_id=session['user_id']
+        job_id=job_id, seeker_id=session['user_id']
     ).first()
     
     if existing_application:
         flash('You have already applied for this job.', 'info')
         return redirect(url_for('main.jobs'))
     
-    # Get cover letter from form (optional)
-    cover_letter = request.form.get('cover_letter', '').strip()
+    current_user = get_current_user()
+    return render_template('apply_job.html', job=job, user=current_user)
+
+@main.route('/submit_application/<int:job_id>', methods=['POST'])
+def submit_application(job_id):
+    """Process application submission"""
+    if not is_logged_in():
+        flash('Please log in to apply for jobs.', 'error')
+        return redirect(url_for('main.login'))
+    
+    if session.get('user_role') != 'seeker':
+        flash('Only job seekers can apply for jobs.', 'error')
+        return redirect(url_for('main.jobs'))
+    
+    job = JobPosting.query.filter_by(id=job_id, is_active=True).first()
+    if not job:
+        flash('Job not found or no longer active.', 'error')
+        return redirect(url_for('main.jobs'))
+    
+    # Check if already applied
+    existing_application = Application.query.filter_by(
+        job_id=job_id, seeker_id=session['user_id']
+    ).first()
+    
+    if existing_application:
+        flash('You have already applied for this job.', 'info')
+        return redirect(url_for('main.jobs'))
     
     try:
-        # Create new application
+        # Handle file upload
+        resume_filename = None
+        if 'resume' in request.files:
+            resume = request.files['resume']
+            if resume.filename:
+                # Create uploads directory if it doesn't exist
+                import os
+                upload_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                # Save file with unique name
+                import uuid
+                file_extension = resume.filename.rsplit('.', 1)[1].lower()
+                resume_filename = f"{uuid.uuid4()}.{file_extension}"
+                resume.save(os.path.join(upload_dir, resume_filename))
+        
+        # Create application with all the data
         new_application = Application(
             job_id=job_id,
             seeker_id=session['user_id'],
-            cover_letter=cover_letter if cover_letter else None
+            
+            # Personal Information
+            full_name=request.form.get('full_name', '').strip(),
+            email=request.form.get('email', '').strip(),
+            phone=request.form.get('phone', '').strip(),
+            address=request.form.get('address', '').strip(),
+            work_authorization=request.form.get('work_authorization', '').strip(),
+            
+            # Professional Profile
+            years_experience=int(request.form.get('years_experience', 0)) if request.form.get('years_experience') else None,
+            expected_salary=request.form.get('expected_salary', '').strip(),
+            willing_to_relocate=bool(request.form.get('willing_to_relocate')),
+            willing_to_travel=bool(request.form.get('willing_to_travel')),
+            
+            # Education
+            highest_qualification=request.form.get('highest_qualification', '').strip(),
+            institution_name=request.form.get('institution_name', '').strip(),
+            field_of_study=request.form.get('field_of_study', '').strip(),
+            graduation_year=int(request.form.get('graduation_year', 0)) if request.form.get('graduation_year') else None,
+            certifications=request.form.get('certifications', '').strip(),
+            
+            # Skills
+            technical_skills=request.form.get('technical_skills', '').strip(),
+            soft_skills=request.form.get('soft_skills', '').strip(),
+            languages=request.form.get('languages', '').strip(),
+            
+            # Documents and Links
+            resume_filename=resume_filename,
+            cover_letter=request.form.get('cover_letter', '').strip(),
+            portfolio_url=request.form.get('portfolio_url', '').strip(),
+            linkedin_url=request.form.get('linkedin_url', '').strip(),
+            github_url=request.form.get('github_url', '').strip(),
+            
+            # Job-specific
+            motivation=request.form.get('motivation', '').strip(),
+            availability_date=datetime.strptime(request.form.get('availability_date'), '%Y-%m-%d').date() if request.form.get('availability_date') else None,
+            referred_by=request.form.get('referred_by', '').strip(),
+            
+            # Legal
+            terms_accepted=bool(request.form.get('terms_accepted')),
+            data_consent=bool(request.form.get('data_consent'))
         )
         
         db.session.add(new_application)
         db.session.commit()
         
-        flash(f'Successfully applied for "{job.title}"!', 'success')
+        flash(f'Successfully applied for "{job.title}"! Your application has been submitted.', 'success')
+        return redirect(url_for('main.seeker_dashboard'))
         
     except Exception as e:
         db.session.rollback()
         flash('An error occurred while submitting your application. Please try again.', 'error')
-    
-    return redirect(url_for('main.jobs'))
+        print(f"Application error: {e}")
+        return redirect(url_for('main.apply_job_form', job_id=job_id))
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -395,6 +479,8 @@ def employer_dashboard():
     try:
         # Get posted jobs and applications with real data from database
         posted_jobs = current_user.get_posted_jobs()
+        
+        # Get recent applications
         recent_applications = current_user.get_recent_applications()
         
         # Calculate statistics
@@ -415,6 +501,7 @@ def employer_dashboard():
                              total_views=total_views)
                              
     except Exception as e:
+        print(f"Employer dashboard error: {e}")
         flash('Error loading dashboard data. Please try again.', 'error')
         return redirect(url_for('main.home'))
 
@@ -620,162 +707,45 @@ def manage_users():
 
 @main.route('/profile')
 def profile():
-    """User profile view - displays current user's profile information"""
-    # Check if user is logged in
+    """User profile page - view profile information"""
     if not is_logged_in():
-        flash('Please log in to access your profile.', 'error')
+        flash('Please log in to view your profile.', 'error')
         return redirect(url_for('main.login'))
     
-    # Get current user
     current_user = get_current_user()
     if not current_user:
         flash('User session expired. Please log in again.', 'error')
         return redirect(url_for('main.login'))
     
-    try:
-        # Get additional profile data
-        profile_data = current_user.get_profile_data()
-        
-        # Calculate profile statistics
-        if current_user.role == 'seeker':
-            applied_jobs_count = len(current_user.get_applied_jobs())
-            profile_stats = {
-                'applications_submitted': applied_jobs_count,
-                'account_age_days': (datetime.utcnow() - current_user.created_at).days
-            }
-        elif current_user.role == 'employer':
-            posted_jobs = current_user.get_posted_jobs()
-            total_applications = sum(job.get('application_count', 0) for job in posted_jobs)
-            profile_stats = {
-                'jobs_posted': len(posted_jobs),
-                'total_applications_received': total_applications,
-                'account_age_days': (datetime.utcnow() - current_user.created_at).days
-            }
-        else:
-            profile_stats = {
-                'account_age_days': (datetime.utcnow() - current_user.created_at).days
-            }
-        
-        return render_template('profile.html', 
-                             user=current_user,
-                             profile_data=profile_data,
-                             profile_stats=profile_stats)
-                             
-    except Exception as e:
-        flash('Error loading profile data. Please try again.', 'error')
-        return redirect(url_for('main.home'))
+    return render_template('profile.html', user=current_user)
 
 @main.route('/profile/edit', methods=['GET', 'POST'])
 def edit_profile():
-    """Edit user profile - allows users to update their profile information"""
-    # Check if user is logged in
+    """Edit user profile"""
     if not is_logged_in():
         flash('Please log in to edit your profile.', 'error')
         return redirect(url_for('main.login'))
     
-    # Get current user
     current_user = get_current_user()
     if not current_user:
         flash('User session expired. Please log in again.', 'error')
         return redirect(url_for('main.login'))
     
     if request.method == 'POST':
-        # Get form data
-        new_username = request.form.get('username', '').strip()
-        new_email = request.form.get('email', '').strip()
-        current_password = request.form.get('current_password', '').strip()
-        new_password = request.form.get('new_password', '').strip()
-        confirm_password = request.form.get('confirm_password', '').strip()
-        full_name = request.form.get('full_name', '').strip()
-        phone = request.form.get('phone', '').strip()
-        location = request.form.get('location', '').strip()
-        bio = request.form.get('bio', '').strip()
-        
-        # Basic validation
-        if not new_username:
-            flash('Username is required.', 'error')
-            return render_template('edit_profile.html', user=current_user)
-        
-        if not new_email:
-            flash('Email is required.', 'error')
-            return render_template('edit_profile.html', user=current_user)
-        
-        if len(new_username) < 3:
-            flash('Username must be at least 3 characters long.', 'error')
-            return render_template('edit_profile.html', user=current_user)
-        
-        if len(new_username) > 80:
-            flash('Username must be 80 characters or less.', 'error')
-            return render_template('edit_profile.html', user=current_user)
-        
-        # Email format validation
-        import re
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if not re.match(email_pattern, new_email):
-            flash('Please enter a valid email address.', 'error')
-            return render_template('edit_profile.html', user=current_user)
-        
-        # Password validation (if user wants to change password)
-        if new_password:
-            if not current_password:
-                flash('Current password is required to change password.', 'error')
-                return render_template('edit_profile.html', user=current_user)
-            
-            if not current_user.check_password(current_password):
-                flash('Current password is incorrect.', 'error')
-                return render_template('edit_profile.html', user=current_user)
-            
-            if len(new_password) < 6:
-                flash('New password must be at least 6 characters long.', 'error')
-                return render_template('edit_profile.html', user=current_user)
-            
-            if new_password != confirm_password:
-                flash('New password and confirmation do not match.', 'error')
-                return render_template('edit_profile.html', user=current_user)
+        # Update profile fields
+        current_user.full_name = request.form.get('full_name', '').strip()
+        current_user.phone = request.form.get('phone', '').strip()
+        current_user.location = request.form.get('location', '').strip()
+        current_user.bio = request.form.get('bio', '').strip()
         
         try:
-            # Check for username uniqueness (excluding current user)
-            if new_username != current_user.username:
-                existing_user = User.query.filter_by(username=new_username).first()
-                if existing_user:
-                    flash('Username already exists. Please choose a different username.', 'error')
-                    return render_template('edit_profile.html', user=current_user)
-            
-            # Check for email uniqueness (excluding current user)
-            if new_email != current_user.email:
-                existing_email = User.query.filter_by(email=new_email).first()
-                if existing_email:
-                    flash('Email already exists. Please use a different email address.', 'error')
-                    return render_template('edit_profile.html', user=current_user)
-            
-            # Update user profile
-            update_success = current_user.update_profile(
-                username=new_username,
-                email=new_email,
-                new_password=new_password if new_password else None,
-                full_name=full_name if full_name else None,
-                phone=phone if phone else None,
-                location=location if location else None,
-                bio=bio if bio else None
-            )
-            
-            if update_success:
-                # Update session data if username changed
-                if new_username != session.get('username'):
-                    session['username'] = new_username
-                
-                flash('Profile updated successfully!', 'success')
-                return redirect(url_for('main.profile'))
-            else:
-                flash('Failed to update profile. Please try again.', 'error')
-                return render_template('edit_profile.html', user=current_user)
-                
+            db.session.commit()
+            flash('Profile updated successfully!', 'success')
+            return redirect(url_for('main.profile'))
         except Exception as e:
             db.session.rollback()
-            flash('An error occurred while updating your profile. Please try again.', 'error')
-            return render_template('edit_profile.html', user=current_user)
+            flash('Error updating profile. Please try again.', 'error')
     
-    # GET request - display edit form
     return render_template('edit_profile.html', user=current_user)
 
 @main.route('/search', methods=['GET', 'POST'])
@@ -795,6 +765,23 @@ def search():
     
     return render_template('jobs.html', jobs=jobs, search_query=query, is_search=True)
 
+@main.route('/dashboard')
+def get_user_dashboard():
+    """Redirect users to their appropriate dashboard based on role"""
+    if not is_logged_in():
+        flash('Please log in to access your dashboard.', 'error')
+        return redirect(url_for('main.login'))
+    
+    user_role = session.get('user_role')
+    if user_role == 'employer':
+        return redirect(url_for('main.employer_dashboard'))
+    elif user_role == 'seeker':
+        return redirect(url_for('main.seeker_dashboard'))
+    elif user_role == 'admin':
+        return redirect(url_for('main.admin_dashboard'))
+    else:
+        return redirect(url_for('main.home'))
+
 # Utility function to check if user is logged in
 def is_logged_in():
     """Check if user is currently logged in"""
@@ -804,7 +791,8 @@ def is_logged_in():
 def get_current_user():
     """Get current logged-in user object"""
     if is_logged_in():
-        return User.query.get(session['user_id'])
+        user_id = session.get('user_id')
+        return User.query.get(user_id)
     return None
 
 # Make utility functions available in templates
