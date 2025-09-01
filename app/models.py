@@ -433,6 +433,8 @@ class JobPosting(db.Model):
     require_skills = db.Column(db.Boolean, default=True)
     require_portfolio = db.Column(db.Boolean, default=False)
     require_cover_letter = db.Column(db.Boolean, default=True)
+    require_resume = db.Column(db.Boolean, default=True)  # Resume is typically always required
+    require_portfolio_links = db.Column(db.Boolean, default=False)  # Portfolio links are optional by default
     
     # Custom questions for this job
     custom_questions = db.Column(db.Text, nullable=True)  # JSON string
