@@ -717,7 +717,25 @@ def profile():
         flash('User session expired. Please log in again.', 'error')
         return redirect(url_for('main.login'))
     
-    return render_template('profile.html', user=current_user)
+    # Get additional profile data
+    profile_data = {
+        'phone': current_user.phone,
+        'location': current_user.location,
+        'bio': current_user.bio
+    }
+    
+    # Calculate profile statistics
+    profile_stats = {
+        'applications_submitted': 0,  # You'll need to implement this based on your database
+        'jobs_posted': 0,  # You'll need to implement this based on your database  
+        'total_applications_received': 0,  # You'll need to implement this based on your database
+        'account_age_days': (datetime.now() - current_user.created_at).days if current_user.created_at else 0
+    }
+    
+    return render_template('profile.html', 
+                         user=current_user, 
+                         profile_data=profile_data, 
+                         profile_stats=profile_stats)
 
 @main.route('/profile/edit', methods=['GET', 'POST'])
 def edit_profile():
