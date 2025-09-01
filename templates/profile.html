@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-primary">
+                    <i class="fas fa-user me-2"></i>
+                    My Profile
+                </h2>
+                <a href="{{ url_for('main.edit_profile') }}" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>
+                    Edit Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Information Card -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Profile Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Username:</strong>
+                            <p class="text-muted mb-2">{{ user.username }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Email:</strong>
+                            <p class="text-muted mb-2">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Role:</strong>
+                            <p class="mb-2">
+                                {% if user.role == 'seeker' %}
+                                    <span class="badge bg-info fs-6">Job Seeker</span>
+                                {% elif user.role == 'employer' %}
+                                    <span class="badge bg-success fs-6">Employer</span>
+                                {% elif user.role == 'admin' %}
+                                    <span class="badge bg-danger fs-6">Administrator</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Member Since:</strong>
+                            <p class="text-muted mb-2">{{ user.created_at.strftime('%B %d, %Y') }}</p>
+                        </div>
+                    </div>
+
+                    {% if profile_data.full_name %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Full Name:</strong>
+                            <p class="text-muted mb-2">{{ profile_data.full_name }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {% if profile_data.phone %}
+                            <strong>Phone:</strong>
+                            <p class="text-muted mb-2">{{ profile_data.phone }}</p>
+                            {% else %}
+                            <strong>Phone:</strong>
+                            <p class="text-muted mb-2"><em>Not provided</em></p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {% if profile_data.location %}
+                            <strong>Location:</strong>
+                            <p class="text-muted mb-2">{{ profile_data.location }}</p>
+                            {% else %}
+                            <strong>Location:</strong>
+                            <p class="text-muted mb-2"><em>Not provided</em></p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if profile_data.bio %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Bio:</strong>
+                            <div class="bg-light p-3 rounded mt-2">
+                                {{ profile_data.bio|nl2br|safe }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Last Updated:</strong>
+                            <p class="text-muted mb-0">{{ user.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Stats Sidebar -->
+        <div class="col-md-4">
+            <!-- Profile Completion -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Profile Completion
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    {% set completion = user.get_profile_completion_percentage() %}
+                    <div class="mb-3">
+                        <div class="position-relative">
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar 
+                                    {% if completion < 50 %}bg-danger
+                                    {% elif completion < 80 %}bg-warning
+                                    {% else %}bg-success{% endif %}" 
+                                    role="progressbar" 
+                                    style="width: {{ completion }}%">
+                                    {{ completion }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0">
+                        {% if completion < 50 %}
+                            Complete your profile to stand out!
+                        {% elif completion < 80 %}
+                            You're almost there!
+                        {% else %}
+                            Great! Your profile is complete.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Account Statistics -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Account Statistics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        {% if user.role == 'seeker' %}
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ profile_stats.applications_submitted or 0 }}</h4>
+                            <p class="text-muted small mb-2">Applications</p>
+                        </div>
+                        {% elif user.role == 'employer' %}
+                        <div class="col-6">
+                            <h4 class="text-success">{{ profile_stats.jobs_posted or 0 }}</h4>
+                            <p class="text-muted small mb-2">Jobs Posted</p>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-info">{{ profile_stats.total_applications_received or 0 }}</h4>
+                            <p class="text-muted small mb-2">Applications</p>
+                        </div>
+                        {% endif %}
+                        <div class="col-{% if user.role == 'employer' %}12{% else %}6{% endif %}">
+                            <h4 class="text-warning">{{ profile_stats.account_age_days or 0 }}</h4>
+                            <p class="text-muted small mb-2">Days Member</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if user.role == 'seeker' %}
+                        <a href="{{ url_for('main.seeker_dashboard') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            My Dashboard
+                        </a>
+                        <a href="{{ url_for('main.jobs') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-search me-2"></i>
+                            Browse Jobs
+                        </a>
+                        {% elif user.role == 'employer' %}
+                        <a href="{{ url_for('main.employer_dashboard') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            My Dashboard
+                        </a>
+                        <a href="{{ url_for('main.post_job') }}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-plus me-2"></i>
+                            Post New Job
+                        </a>
+                        {% elif user.role == 'admin' %}
+                        <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-cogs me-2"></i>
+                            Admin Dashboard
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('main.edit_profile') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-edit me-2"></i>
+                            Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
