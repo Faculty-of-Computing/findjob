@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Job Listings - FindJob{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold text-primary">
+            <i class="fas fa-search me-2"></i>Job Opportunities
+        </h1>
+        <p class="lead text-muted">Discover your next career opportunity</p>
+    </div>
+    <div class="col-md-4 d-flex align-items-center justify-content-end">
+        {% if logged_in() and current_user().role == 'employer' %}
+            <a href="{{ url_for('main.post_job') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Post Job
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body bg-gradient-light">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">
+                    <i class="fas fa-search me-1"></i>Search Jobs
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="search" 
+                       name="search" 
+                       placeholder="Job title, company, keywords..."
+                       value="{{ request.args.get('search', '') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="location" class="form-label">
+                    <i class="fas fa-map-marker-alt me-1"></i>Location
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="location" 
+                       name="location" 
+                       placeholder="City, state, or remote"
+                       value="{{ request.args.get('location', '') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="job_type" class="form-label">
+                    <i class="fas fa-clock me-1"></i>Job Type
+                </label>
+                <select class="form-select" id="job_type" name="job_type">
+                    <option value="">All Types</option>
+                    <option value="full-time" {% if request.args.get('job_type') == 'full-time' %}selected{% endif %}>Full-time</option>
+                    <option value="part-time" {% if request.args.get('job_type') == 'part-time' %}selected{% endif %}>Part-time</option>
+                    <option value="contract" {% if request.args.get('job_type') == 'contract' %}selected{% endif %}>Contract</option>
+                    <option value="internship" {% if request.args.get('job_type') == 'internship' %}selected{% endif %}>Internship</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-1"></i>Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Job Listings -->
+{% if jobs.items %}
+    <div class="row">
+        {% for job in jobs.items %}
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 shadow-sm border-0 job-card">
+                <div class="card-body d-flex flex-column">
+                    <!-- Job Header -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="flex-grow-1">
+                            <h5 class="card-title text-primary fw-bold mb-1">
+                                {{ job.title }}
+                            </h5>
+                            {% if job.company_name %}
+                            <h6 class="card-subtitle text-muted mb-2">
+                                <i class="fas fa-building me-1"></i>{{ job.company_name }}
+                            </h6>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+                            {{ job.job_type.replace('-', ' ').title() }}
+                        </span>
+                    </div>
+
+                    <!-- Job Details -->
+                    <div class="mb-3">
+                        {% if job.location %}
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                        </p>
+                        {% endif %}
+                        {% if job.salary_range %}
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-dollar-sign me-1"></i>{{ job.salary_range }}
+                        </p>
+                        {% endif %}
+                        <p class="text-muted small mb-0">
+                            <i class="fas fa-calendar me-1"></i>Posted {{ job.posted_date.strftime('%B %d, %Y') }}
+                        </p>
+                    </div>
+
+                    <!-- Job Description Preview -->
+                    <div class="flex-grow-1 mb-3">
+                        <p class="card-text text-muted">
+                            {{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-auto">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#jobModal{{ job.id }}">
+                                    <i class="fas fa-eye me-1"></i>View Details
+                                </button>
+                                {% if logged_in() and current_user().role == 'seeker' %}
+                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#applyModal{{ job.id }}">
+                                    <i class="fas fa-paper-plane me-1"></i>Apply Now
+                                </button>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>{{ job.employer.username }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Details Modal -->
+        <div class="modal fade" id="jobModal{{ job.id }}" tabindex="-1" aria-labelledby="jobModalLabel{{ job.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="jobModalLabel{{ job.id }}">
+                            <i class="fas fa-briefcase me-2"></i>{{ job.title }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if job.company_name %}
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-building me-1"></i>{{ job.company_name }}
+                        </h6>
+                        {% endif %}
+                        
+                        <div class="row mb-3">
+                            {% if job.location %}
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-map-marker-alt me-1"></i>Location:</strong>
+                                <p class="mb-0">{{ job.location }}</p>
+                            </div>
+                            {% endif %}
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-clock me-1"></i>Job Type:</strong>
+                                <p class="mb-0">{{ job.job_type.replace('-', ' ').title() }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if job.salary_range %}
+                        <div class="mb-3">
+                            <strong><i class="fas fa-dollar-sign me-1"></i>Salary Range:</strong>
+                            <p class="mb-0">{{ job.salary_range }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <strong><i class="fas fa-file-alt me-1"></i>Job Description:</strong>
+                            <div class="mt-2" style="white-space: pre-line;">{{ job.description }}</div>
+                        </div>
+                        
+                        <div class="text-muted small">
+                            <p class="mb-1">
+                                <i class="fas fa-calendar me-1"></i>Posted on {{ job.posted_date.strftime('%B %d, %Y at %I:%M %p') }}
+                            </p>
+                            <p class="mb-0">
+                                <i class="fas fa-user me-1"></i>Posted by {{ job.employer.username }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        {% if logged_in() and current_user().role == 'seeker' %}
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#applyModal{{ job.id }}">
+                            <i class="fas fa-paper-plane me-1"></i>Apply for this Job
+                        </button>
+                        {% endif %}
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Modal -->
+        {% if logged_in() and current_user().role == 'seeker' %}
+        <div class="modal fade" id="applyModal{{ job.id }}" tabindex="-1" aria-labelledby="applyModalLabel{{ job.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="applyModalLabel{{ job.id }}">
+                            <i class="fas fa-paper-plane me-2"></i>Apply for {{ job.title }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="POST" action="{{ url_for('main.apply_job', job_id=job.id) }}">
+                        <div class="modal-body">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                You are applying for <strong>{{ job.title }}</strong>
+                                {% if job.company_name %}at <strong>{{ job.company_name }}</strong>{% endif %}.
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="coverLetter{{ job.id }}" class="form-label">
+                                    <i class="fas fa-file-alt me-1"></i>Cover Letter (Optional)
+                                </label>
+                                <textarea class="form-control" 
+                                          id="coverLetter{{ job.id }}" 
+                                          name="cover_letter" 
+                                          rows="5" 
+                                          placeholder="Tell the employer why you're interested in this position and what makes you a great candidate..."></textarea>
+                                <div class="form-text">
+                                    <i class="fas fa-lightbulb me-1"></i>A personalized cover letter can help your application stand out
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane me-1"></i>Submit Application
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if jobs.pages > 1 %}
+    <nav aria-label="Job listings pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if jobs.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.jobs', page=jobs.prev_num) }}">
+                        <i class="fas fa-chevron-left me-1"></i>Previous
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for page_num in jobs.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != jobs.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('main.jobs', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if jobs.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.jobs', page=jobs.next_num) }}">
+                        Next<i class="fas fa-chevron-right ms-1"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+{% else %}
+    <!-- No Jobs Found -->
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-search text-muted" style="font-size: 4rem;"></i>
+        </div>
+        <h3 class="text-muted mb-3">No job opportunities found</h3>
+        <p class="text-muted mb-4">
+            {% if request.args.get('search') or request.args.get('location') or request.args.get('job_type') %}
+                Try adjusting your search criteria or <a href="{{ url_for('main.jobs') }}" class="text-decoration-none">browse all jobs</a>.
+            {% else %}
+                Be the first to discover new opportunities when they're posted.
+            {% endif %}
+        </p>
+        
+        {% if logged_in() and current_user().role == 'employer' %}
+        <a href="{{ url_for('main.post_job') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>Post the First Job
+        </a>
+        {% endif %}
+    </div>
+{% endif %}
+
+<style>
+    .bg-gradient-light {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .job-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .job-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+        border-left-color: #007bff;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem;
+        margin-right: 0.25rem;
+    }
+    
+    .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+    
+    .modal-header.bg-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    }
+    
+    .modal-header.bg-success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+    }
+</style>
+{% endblock %}
