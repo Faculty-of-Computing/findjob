@@ -413,7 +413,7 @@ class JobPosting(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(200), nullable=False, index=True)
-    description = db.Column(db.Text, nullable=False)
+    description = db.Column(db.Text, nullable=True)
     employer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     company_name = db.Column(db.String(100), nullable=True)
     location = db.Column(db.String(100), nullable=True, index=True)
@@ -421,6 +421,9 @@ class JobPosting(db.Model):
     job_type = db.Column(db.String(20), default='full-time', nullable=True)  # Changed for SQLite
     posted_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+    is_draft = db.Column(db.Boolean, default=False, nullable=False)
+    draft_saved_at = db.Column(db.DateTime, nullable=True)
+    published_at = db.Column(db.DateTime, nullable=True)
     
     # Application Requirements (what employer wants to collect)
     require_phone = db.Column(db.Boolean, default=True)
