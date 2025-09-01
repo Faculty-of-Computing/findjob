@@ -87,6 +87,18 @@ def post_job():
         salary_range = request.form.get('salary_range', '').strip()
         job_type = request.form.get('job_type', 'full-time')
         
+        # Application requirements
+        require_phone = bool(request.form.get('require_phone'))
+        require_address = bool(request.form.get('require_address'))
+        require_work_authorization = bool(request.form.get('require_work_authorization'))
+        require_experience_years = bool(request.form.get('require_experience_years'))
+        require_expected_salary = bool(request.form.get('require_expected_salary'))
+        require_education = bool(request.form.get('require_education'))
+        require_skills = bool(request.form.get('require_skills'))
+        require_cover_letter = bool(request.form.get('require_cover_letter'))
+        require_portfolio = bool(request.form.get('require_portfolio'))
+        is_active = bool(request.form.get('is_active'))
+        
         # Basic validation
         if not title:
             flash('Job title is required.', 'error')
@@ -96,8 +108,12 @@ def post_job():
             flash('Job description is required.', 'error')
             return render_template('post_job.html')
         
-        if len(title) > 200:
-            flash('Job title must be 200 characters or less.', 'error')
+        if not company_name:
+            flash('Company name is required.', 'error')
+            return render_template('post_job.html')
+        
+        if not location:
+            flash('Location is required.', 'error')
             return render_template('post_job.html')
         
         try:
@@ -105,18 +121,31 @@ def post_job():
             new_job = JobPosting(
                 title=title,
                 description=description,
-                employer_id=session['user_id'],
-                company_name=company_name if company_name else None,
-                location=location if location else None,
+                company_name=company_name,
+                location=location,
                 salary_range=salary_range if salary_range else None,
-                job_type=job_type
+                job_type=job_type,
+                employer_id=session['user_id'],
+                is_active=is_active,
+                require_phone=require_phone,
+                require_address=require_address,
+                require_work_authorization=require_work_authorization,
+                require_experience_years=require_experience_years,
+                require_expected_salary=require_expected_salary,
+                require_education=require_education,
+                require_skills=require_skills,
+                require_cover_letter=require_cover_letter,
+                require_portfolio=require_portfolio
             )
             
             db.session.add(new_job)
             db.session.commit()
             
-            flash(f'Job "{title}" posted successfully!', 'success')
-            return redirect(url_for('main.jobs'))
+            if is_active:
+                flash('Job posted successfully and is now live!', 'success')
+            else:
+                flash('Job saved as draft successfully!', 'success')
+            return redirect(url_for('main.employer_dashboard'))
             
         except Exception as e:
             db.session.rollback()
