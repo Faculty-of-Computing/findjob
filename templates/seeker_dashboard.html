@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Job Seeker Dashboard - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Dashboard Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-primary">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Welcome back, {{ user.username }}!
+                </h2>
+                <span class="badge bg-info fs-6">Job Seeker</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="fas fa-paper-plane text-primary fs-1 mb-3"></i>
+                    <h4 class="card-title">{{ total_applications or 0 }}</h4>
+                    <p class="card-text text-muted">Applications Submitted</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="fas fa-clock text-warning fs-1 mb-3"></i>
+                    <h4 class="card-title">{{ pending_count or 0 }}</h4>
+                    <p class="card-text text-muted">Pending Review</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="fas fa-eye text-info fs-1 mb-3"></i>
+                    <h4 class="card-title">{{ reviewed_count or 0 }}</h4>
+                    <p class="card-text text-muted">Under Review</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="fas fa-check-circle text-success fs-1 mb-3"></i>
+                    <h4 class="card-title">{{ accepted_count or 0 }}</h4>
+                    <p class="card-text text-muted">Accepted</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applied Jobs Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-briefcase me-2"></i>
+                        Your Job Applications
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if applied_jobs %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Job Title</th>
+                                        <th>Company</th>
+                                        <th>Location</th>
+                                        <th>Applied Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for application in applied_jobs %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ application.job_title }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ application.job_type }}</small>
+                                            {% if application.salary_range %}
+                                            <br>
+                                            <small class="text-success">{{ application.salary_range }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ application.company_name }}</td>
+                                        <td>{{ application.location }}</td>
+                                        <td>
+                                            {{ application.application_date.strftime('%B %d, %Y') }}
+                                            <br>
+                                            <small class="text-muted">{{ application.application_date.strftime('%I:%M %p') }}</small>
+                                        </td>
+                                        <td>
+                                            {% if application.status == 'pending' %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% elif application.status == 'reviewed' %}
+                                                <span class="badge bg-info">Under Review</span>
+                                            {% elif application.status == 'accepted' %}
+                                                <span class="badge bg-success">Accepted</span>
+                                            {% elif application.status == 'rejected' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ application.status.title() }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-outline-primary" 
+                                               data-bs-toggle="modal" 
+                                               data-bs-target="#applicationModal{{ application.application_id }}">
+                                               View Details
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-search text-muted fs-1 mb-3"></i>
+                            <h5 class="text-muted">No Applications Yet</h5>
+                            <p class="text-muted">Start applying for jobs to see them here.</p>
+                            <a href="{{ url_for('main.jobs') }}" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Browse Jobs
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ url_for('main.jobs') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search me-2"></i>
+                                Browse New Jobs
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="#" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-user-edit me-2"></i>
+                                Update Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Detail Modals -->
+{% if applied_jobs %}
+    {% for application in applied_jobs %}
+    <div class="modal fade" id="applicationModal{{ application.application_id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Application Details - {{ application.job_title }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Company:</strong> {{ application.company_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Location:</strong> {{ application.location }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Job Type:</strong> {{ application.job_type }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Applied:</strong> {{ application.application_date.strftime('%B %d, %Y at %I:%M %p') }}
+                        </div>
+                    </div>
+                    {% if application.cover_letter %}
+                    <div class="mb-3">
+                        <strong>Cover Letter:</strong>
+                        <div class="bg-light p-3 rounded mt-2">
+                            {{ application.cover_letter }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}
