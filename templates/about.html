@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}About - FindJob{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="display-4 text-center mb-4">About FindJob</h1>
+        
+        <div class="lead text-center mb-5">
+            <p>Connecting talented professionals with exciting opportunities worldwide.</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <h3>Our Mission</h3>
+                <p>We strive to create a platform where job seekers can find meaningful career opportunities and employers can discover exceptional talent. Our goal is to make the job search and hiring process simple, efficient, and successful for everyone involved.</p>
+            </div>
+            <div class="col-md-6 mb-4">
+                <h3>How It Works</h3>
+                <ul>
+                    <li>Employers post job opportunities with detailed descriptions</li>
+                    <li>Job seekers browse and search for relevant positions</li>
+                    <li>Applications are submitted and tracked through our platform</li>
+                    <li>Employers review applications and connect with candidates</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5">
+            <h3>Get Started Today</h3>
+            <p class="mb-4">Whether you're looking for your next career move or seeking top talent for your team, our platform is here to help.</p>
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{{ url_for('main.register') }}" class="btn btn-primary">Join Now</a>
+                <a href="{{ url_for('main.jobs') }}" class="btn btn-outline-primary">Browse Jobs</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
