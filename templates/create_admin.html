@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-user-plus"></i> Create New Administrator</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="createAdminForm">
+                        <!-- Basic Information -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username *</label>
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                    <div class="form-text">Must be 3-80 characters long</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name">
+                            <div class="form-text">Optional - Admin's full name for display</div>
+                        </div>
+
+                        <!-- Password Section -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password *</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <div class="form-text">Must be at least 6 characters long</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm Password *</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permissions Section -->
+                        <div class="mb-4">
+                            <label class="form-label">Administrator Permissions *</label>
+                            <div class="form-text mb-3">Select the permissions for this administrator. At least one permission must be selected.</div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="manage_users" name="manage_users">
+                                        <label class="form-check-label" for="manage_users">
+                                            <strong>Manage Users</strong>
+                                            <br><small class="text-muted">Create, edit, and manage user accounts</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="manage_jobs" name="manage_jobs">
+                                        <label class="form-check-label" for="manage_jobs">
+                                            <strong>Manage Jobs</strong>
+                                            <br><small class="text-muted">Review and manage job postings</small>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="manage_applications" name="manage_applications">
+                                        <label class="form-check-label" for="manage_applications">
+                                            <strong>Manage Applications</strong>
+                                            <br><small class="text-muted">Review and manage job applications</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="view_reports" name="view_reports">
+                                        <label class="form-check-label" for="view_reports">
+                                            <strong>View Reports</strong>
+                                            <br><small class="text-muted">Access system reports and analytics</small>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="system_settings" name="system_settings">
+                                        <label class="form-check-label" for="system_settings">
+                                            <strong>System Settings</strong>
+                                            <br><small class="text-muted">Modify system configuration</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> Create Administrator
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('createAdminForm');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    // Password confirmation validation
+    function validatePasswords() {
+        if (password.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+    
+    password.addEventListener('input', validatePasswords);
+    confirmPassword.addEventListener('input', validatePasswords);
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+        const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+        
+        if (checkedBoxes.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one permission for the new administrator.');
+            return false;
+        }
+        
+        if (password.value !== confirmPassword.value) {
+            e.preventDefault();
+            alert('Passwords do not match.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}
