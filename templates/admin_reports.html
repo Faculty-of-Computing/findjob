@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Reports - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-primary">
+                    <i class="fas fa-chart-line me-2"></i>
+                    System Reports & Analytics
+                </h2>
+                <div>
+                    <button class="btn btn-success" onclick="exportReports()">
+                        <i class="fas fa-download"></i> Export Reports
+                    </button>
+                    <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-users fs-1 mb-2"></i>
+                    <h4>{{ reports.user_growth.total_users or 0 }}</h4>
+                    <p class="mb-0">Total Users</p>
+                    <small>+{{ reports.user_growth.new_this_month or 0 }} this month</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-briefcase fs-1 mb-2"></i>
+                    <h4>{{ reports.job_statistics.total_jobs or 0 }}</h4>
+                    <p class="mb-0">Total Jobs</p>
+                    <small>{{ reports.job_statistics.active_jobs or 0 }} active</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-paper-plane fs-1 mb-2"></i>
+                    <h4>{{ reports.application_trends.total_applications or 0 }}</h4>
+                    <p class="mb-0">Applications</p>
+                    <small>+{{ reports.application_trends.new_this_week or 0 }} this week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark text-center">
+                <div class="card-body">
+                    <i class="fas fa-percentage fs-1 mb-2"></i>
+                    <h4>{{ "%.1f"|format(reports.application_trends.success_rate or 0) }}%</h4>
+                    <p class="mb-0">Success Rate</p>
+                    <small>Applications to hires</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Growth Chart -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-area me-2"></i>
+                        User Growth Trends
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="userGrowthChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-pie-chart me-2"></i>
+                        User Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="userDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-briefcase me-2"></i>
+                        Job Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Total Jobs Posted:</th>
+                                <td>{{ reports.job_statistics.total_jobs or 0 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Active Jobs:</th>
+                                <td>{{ reports.job_statistics.active_jobs or 0 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Draft Jobs:</th>
+                                <td>{{ reports.job_statistics.draft_jobs or 0 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Jobs This Month:</th>
+                                <td>{{ reports.job_statistics.jobs_this_month or 0 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Average Applications per Job:</th>
+                                <td>{{ "%.1f"|format(reports.job_statistics.avg_applications or 0) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Application Trends
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Total Applications:</th>
+                                <td>{{ reports.application_trends.total_applications or 0 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Applications This Week:</th>
+                                <td>{{ reports.application_trends.new_this_week or 0 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Applications Today:</th>
+                                <td>{{ reports.application_trends.applications_today or 0 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Pending Applications:</th>
+                                <td>{{ reports.application_trends.pending_applications or 0 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Conversion Rate:</th>
+                                <td>{{ "%.1f"|format(reports.application_trends.conversion_rate or 0) }}%</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performers -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy me-2"></i>
+                        Top Employers (by Jobs Posted)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Employer</th>
+                                    <th>Company</th>
+                                    <th>Jobs Posted</th>
+                                    <th>Applications</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if reports.job_statistics.top_employers %}
+                                    {% for employer in reports.job_statistics.top_employers %}
+                                    <tr>
+                                        <td>{{ employer.username }}</td>
+                                        <td>{{ employer.company_name or 'N/A' }}</td>
+                                        <td>{{ employer.jobs_count }}</td>
+                                        <td>{{ employer.applications_count }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No data available</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i>
+                        Most Active Job Seekers
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Job Seeker</th>
+                                    <th>Applications</th>
+                                    <th>Success Rate</th>
+                                    <th>Last Active</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if reports.application_trends.top_seekers %}
+                                    {% for seeker in reports.application_trends.top_seekers %}
+                                    <tr>
+                                        <td>{{ seeker.username }}</td>
+                                        <td>{{ seeker.applications_count }}</td>
+                                        <td>{{ "%.1f"|format(seeker.success_rate or 0) }}%</td>
+                                        <td>{{ seeker.last_login.strftime('%m/%d/%Y') if seeker.last_login else 'Never' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No data available</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Recent System Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Activity</th>
+                                    <th>User</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ "Now"|default("10:30 AM") }}</td>
+                                    <td><span class="badge bg-success">New User</span></td>
+                                    <td>john_doe</td>
+                                    <td>Registered as Job Seeker</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ "15 min ago"|default("10:15 AM") }}</td>
+                                    <td><span class="badge bg-info">Job Posted</span></td>
+                                    <td>tech_corp</td>
+                                    <td>Software Developer position</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ "30 min ago"|default("10:00 AM") }}</td>
+                                    <td><span class="badge bg-warning">Application</span></td>
+                                    <td>jane_smith</td>
+                                    <td>Applied to Marketing Manager</td>
+                                </tr>
+                                <!-- Add more activity rows as needed -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// User Growth Chart
+const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+new Chart(userGrowthCtx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+            label: 'New Users',
+            data: [12, 19, 8, 15, 25, 32],
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// User Distribution Chart
+const userDistCtx = document.getElementById('userDistributionChart').getContext('2d');
+new Chart(userDistCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Job Seekers', 'Employers', 'Admins'],
+        datasets: [{
+            data: [{{ reports.user_growth.seekers_count or 0 }}, {{ reports.user_growth.employers_count or 0 }}, {{ reports.user_growth.admins_count or 0 }}],
+            backgroundColor: ['#36A2EB', '#4BC0C0', '#FF6384']
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+
+function exportReports() {
+    // Add export functionality
+    alert('Export functionality would be implemented here');
+}
+</script>
+{% endblock %}
