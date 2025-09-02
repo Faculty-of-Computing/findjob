@@ -563,7 +563,7 @@ def admin_dashboard():
             'system_health': {
                 'database_status': 'Connected',
                 'last_backup': 'Not configured',
-                'active_sessions': len([u for u in User.get_active_users() if u.get('is_active')])
+                'active_sessions': len([u for u in User.get_active_users() if hasattr(u, 'id')])
             }
         }
         
@@ -574,6 +574,7 @@ def admin_dashboard():
                              user_permissions=current_user.get_permissions())
                              
     except Exception as e:
+        print(f"Admin dashboard error: {e}")  # Debug print
         flash('Error loading admin dashboard data. Please try again.', 'error')
         return redirect(url_for('main.home'))
 
