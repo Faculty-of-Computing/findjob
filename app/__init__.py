@@ -24,7 +24,8 @@ def create_app():
         app.config['DEBUG'] = False
     else:
         # Development configuration
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///findjob.db'
+        db_path = os.path.join(os.path.dirname(__file__), '..', 'findjob.db')
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
         app.config['SECRET_KEY'] = 'bvaIbwm7Ctm2Gf2CZUUfaHU--qYbVUknAEwGcAcP_qs='
         app.config['DEBUG'] = True
     
