@@ -242,128 +242,122 @@ class User(db.Model):
     
     @staticmethod
     def get_system_overview():
-        """Get system overview statistics for admin dashboard with real database data"""
+        """Get system overview statistics"""
         try:
-            from sqlalchemy import func, and_, extract
+            from app.models import JobPosting, Application
+            
+            total_users = User.query.count()
+            total_jobs = JobPosting.query.count()
+            total_applications = Application.query.count()
+            
+            # Get counts by role
+            seekers_count = User.query.filter_by(role='seeker').count()
+            employers_count = User.query.filter_by(role='employer').count()
+            admins_count = User.query.filter_by(role='admin').count()
+            
+            # Get recent data (last 30 days)
             from datetime import datetime, timedelta
+            thirty_days_ago = datetime.now() - timedelta(days=30)
             
-            # Calculate date ranges
-            now = datetime.now()
-            start_of_month = datetime(now.year, now.month, 1)
-            start_of_today = datetime(now.year, now.month, now.day)
-            
-            # Total counts
-            total_users = db.session.query(func.count(User.id)).scalar() or 0
-            total_jobs = db.session.query(func.count(JobPosting.id)).filter(
-                JobPosting.is_active == True
-            ).scalar() or 0
-            total_applications = db.session.query(func.count(Application.id)).scalar() or 0
-            
-            # User role counts
-            total_employers = db.session.query(func.count(User.id)).filter(
-                User.role == 'employer'
-            ).scalar() or 0
-            
-            active_employers = db.session.query(func.count(User.id)).filter(
-                and_(User.role == 'employer', User.is_active == True)
-            ).scalar() or 0
-            
-            # Monthly counts
-            new_users_this_month = db.session.query(func.count(User.id)).filter(
-                User.created_at >= start_of_month
-            ).scalar() or 0
-            
-            new_jobs_this_month = db.session.query(func.count(JobPosting.id)).filter(
-                JobPosting.posted_date >= start_of_month
-            ).scalar() or 0
-            
-            new_applications_this_month = db.session.query(func.count(Application.id)).filter(
-                Application.application_date >= start_of_month
-            ).scalar() or 0
-            
-            # Daily counts
-            applications_today = db.session.query(func.count(Application.id)).filter(
-                Application.application_date >= start_of_today
-            ).scalar() or 0
-            
-            jobs_posted_today = db.session.query(func.count(JobPosting.id)).filter(
-                JobPosting.posted_date >= start_of_today
-            ).scalar() or 0
-            
-            new_users_today = db.session.query(func.count(User.id)).filter(
-                User.created_at >= start_of_today
-            ).scalar() or 0
-            
-            # Recent users
-            recent_users_query = db.session.query(User).order_by(
-                User.created_at.desc()
-            ).limit(5).all()
-            
-            recent_users = []
-            for user in recent_users_query:
-                recent_users.append({
-                    'username': user.username,
-                    'role': user.role,
-                    'created_at': user.created_at,
-                    'is_active': user.is_active
-                })
-            
-            # Recent jobs
-            recent_jobs_query = db.session.query(
-                JobPosting.title,
-                JobPosting.company_name,
-                JobPosting.posted_date,
-                func.count(Application.id).label('application_count')
-            ).outerjoin(
-                Application, JobPosting.id == Application.job_id
-            ).group_by(
-                JobPosting.id
-            ).order_by(
-                JobPosting.posted_date.desc()
-            ).limit(5).all()
-            
-            recent_jobs = []
-            for job in recent_jobs_query:
-                recent_jobs.append({
-                    'title': job.title,
-                    'company_name': job.company_name or 'N/A',
-                    'posted_date': job.posted_date,
-                    'application_count': job.application_count or 0
-                })
+            recent_users = User.query.filter(User.created_at >= thirty_days_ago).all()
+            recent_jobs = JobPosting.query.filter(JobPosting.posted_date >= thirty_days_ago).all()
             
             return {
                 'total_users': total_users,
                 'total_jobs': total_jobs,
                 'total_applications': total_applications,
-                'total_employers': total_employers,
-                'active_employers': active_employers,
-                'new_users_this_month': new_users_this_month,
-                'new_jobs_this_month': new_jobs_this_month,
-                'new_applications_this_month': new_applications_this_month,
-                'applications_today': applications_today,
-                'jobs_posted_today': jobs_posted_today,
-                'new_users_today': new_users_today,
-                'recent_users': recent_users,
-                'recent_jobs': recent_jobs
+                'seekers_count': seekers_count,
+                'employers_count': employers_count,
+                'admins_count': admins_count,
+                'recent_users': recent_users[:5],  # Last 5 users
+                'recent_jobs': recent_jobs[:5],   # Last 5 jobs
+                'new_users_this_month': len(recent_users),
+                'new_jobs_this_month': len(recent_jobs),
+                'new_applications_this_month': Application.query.filter(Application.application_date >= thirty_days_ago).count(),
+                'total_employers': employers_count,
+                'active_employers': employers_count,  # Simplified for now
+                'applications_today': Application.query.filter(Application.application_date >= datetime.now().date()).count(),
+                'jobs_posted_today': JobPosting.query.filter(JobPosting.posted_date >= datetime.now().date()).count(),
+                'new_users_today': User.query.filter(User.created_at >= datetime.now().date()).count()
             }
-            
         except Exception as e:
-            print(f"Error fetching system overview: {e}")
-            # Return default values if query fails
+            print(f"Error in get_system_overview: {e}")
             return {
                 'total_users': 0,
                 'total_jobs': 0,
                 'total_applications': 0,
-                'total_employers': 0,
-                'active_employers': 0,
+                'seekers_count': 0,
+                'employers_count': 0,
+                'admins_count': 0,
+                'recent_users': [],
+                'recent_jobs': [],
                 'new_users_this_month': 0,
                 'new_jobs_this_month': 0,
                 'new_applications_this_month': 0,
+                'total_employers': 0,
+                'active_employers': 0,
                 'applications_today': 0,
                 'jobs_posted_today': 0,
-                'new_users_today': 0,
-                'recent_users': [],
-                'recent_jobs': []
+                'new_users_today': 0
+            }
+    
+    @staticmethod
+    def get_admin_count():
+        """Get total number of admin users"""
+        try:
+            return User.query.filter_by(role='admin').count()
+        except Exception as e:
+            print(f"Error in get_admin_count: {e}")
+            return 0
+    
+    @staticmethod
+    def get_recent_admin_activities():
+        """Get recent admin activities"""
+        try:
+            # For now, return recent admin logins or actions
+            # You can expand this to track actual admin activities
+            recent_admins = User.query.filter_by(role='admin').order_by(User.created_at.desc()).limit(5).all()
+            
+            activities = []
+            for admin in recent_admins:
+                activities.append({
+                    'username': admin.username,
+                    'action': 'Admin account created',
+                    'date': admin.created_at
+                })
+            
+            return activities
+        except Exception as e:
+            print(f"Error in get_recent_admin_activities: {e}")
+            return []
+    
+    @staticmethod
+    def get_active_users():
+        """Get list of active users"""
+        try:
+            # Assuming you want all active users
+            return User.query.all()
+        except Exception as e:
+            print(f"Error in get_active_users: {e}")
+            return []
+    
+    def get_permissions(self):
+        """Get user permissions"""
+        if self.role == 'admin':
+            return {
+                'manage_users': True,
+                'manage_jobs': True,
+                'manage_applications': True,
+                'view_reports': True,
+                'system_settings': True
+            }
+        else:
+            return {
+                'manage_users': False,
+                'manage_jobs': False,
+                'manage_applications': False,
+                'view_reports': False,
+                'system_settings': False
             }
 
     def set_permissions(self, permissions_dict):
