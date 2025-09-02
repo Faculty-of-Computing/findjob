@@ -217,15 +217,15 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="#" class="btn btn-outline-primary">
+                        <a href="{{ url_for('main.manage_users') }}" class="btn btn-outline-primary">
                             <i class="fas fa-users me-2"></i>
                             Manage Users
                         </a>
-                        <a href="#" class="btn btn-outline-info">
+                        <a href="{{ url_for('main.admin_manage_jobs') }}" class="btn btn-outline-info">
                             <i class="fas fa-briefcase me-2"></i>
                             Review Jobs
                         </a>
-                        <a href="#" class="btn btn-outline-warning">
+                        <a href="{{ url_for('main.admin_reports') }}" class="btn btn-outline-warning">
                             <i class="fas fa-flag me-2"></i>
                             View Reports
                         </a>
