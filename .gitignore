@@ -35,4 +35,6 @@ dist/
 build/
 *.egg-info/
 
+instance/
+
 uploads/
