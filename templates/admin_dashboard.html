@@ -125,7 +125,7 @@
                         </table>
                     </div>
                     <div class="text-center">
-                        <a href="#" class="btn btn-outline-primary btn-sm">View All Users</a>
+                        <a href="{{ url_for('main.manage_users') }}" class="btn btn-outline-primary btn-sm">View All Users</a>
                     </div>
                 </div>
             </div>
@@ -171,7 +171,7 @@
                         </table>
                     </div>
                     <div class="text-center">
-                        <a href="#" class="btn btn-outline-info btn-sm">View All Jobs</a>
+                        <a href="{{ url_for('main.admin_manage_jobs') }}" class="btn btn-outline-info btn-sm">View All Jobs</a>
                     </div>
                 </div>
             </div>
@@ -217,25 +217,25 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <a href="{{ url_for('main.create_admin') }}" class="btn btn-outline-primary w-100">
                                 <i class="fas fa-user-plus me-2"></i>
                                 Create Admin
                             </a>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <a href="{{ url_for('main.manage_users') }}" class="btn btn-outline-secondary w-100">
                                 <i class="fas fa-users me-2"></i>
                                 Manage Users
                             </a>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <a href="{{ url_for('main.admin_manage_jobs') }}" class="btn btn-outline-success w-100">
                                 <i class="fas fa-briefcase me-2"></i>
                                 Manage Jobs
                             </a>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <a href="{{ url_for('main.admin_reports') }}" class="btn btn-outline-info w-100">
                                 <i class="fas fa-chart-line me-2"></i>
                                 View Reports
