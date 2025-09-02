@@ -279,25 +279,30 @@
                                 </tr>
                             </thead>
                             <tbody>
+                            {% if reports.recent_activity %}
+                                {% for activity in reports.recent_activity %}
                                 <tr>
-                                    <td>{{ "Now"|default("10:30 AM") }}</td>
-                                    <td><span class="badge bg-success">New User</span></td>
-                                    <td>john_doe</td>
-                                    <td>Registered as Job Seeker</td>
+                                    <td>{{ activity.time }}</td>
+                                    <td>
+                                        {% if activity.activity_type == 'user' %}
+                                            <span class="badge bg-success">{{ activity.activity }}</span>
+                                        {% elif activity.activity_type == 'job' %}
+                                            <span class="badge bg-info">{{ activity.activity }}</span>
+                                        {% elif activity.activity_type == 'application' %}
+                                            <span class="badge bg-warning">{{ activity.activity }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ activity.activity }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ activity.user }}</td>
+                                    <td>{{ activity.details }}</td>
                                 </tr>
+                                {% endfor %}
+                            {% else %}
                                 <tr>
-                                    <td>{{ "15 min ago"|default("10:15 AM") }}</td>
-                                    <td><span class="badge bg-info">Job Posted</span></td>
-                                    <td>tech_corp</td>
-                                    <td>Software Developer position</td>
+                                    <td colspan="4" class="text-center text-muted">No recent activity</td>
                                 </tr>
-                                <tr>
-                                    <td>{{ "30 min ago"|default("10:00 AM") }}</td>
-                                    <td><span class="badge bg-warning">Application</span></td>
-                                    <td>jane_smith</td>
-                                    <td>Applied to Marketing Manager</td>
-                                </tr>
-                                <!-- Add more activity rows as needed -->
+                            {% endif %}
                             </tbody>
                         </table>
                     </div>
