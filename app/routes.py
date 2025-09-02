@@ -1044,3 +1044,72 @@ def manage_applications(job_id):
     applications = Application.query.filter_by(job_id=job_id).all()
     
     return render_template('manage_applications.html', job=job, applications=applications)
+
+@main.route('/view_application/<int:application_id>')
+def view_application(application_id):
+    """View detailed application information"""
+    if not is_logged_in():
+        flash('Please log in to access this page.', 'error')
+        return redirect(url_for('main.login'))
+    
+    if session.get('user_role') != 'employer':
+        flash('Only employers can view applications.', 'error')
+        return redirect(url_for('main.home'))
+    
+    # Get the application and verify ownership through job
+    application = Application.query.join(JobPosting).filter(
+        Application.id == application_id,
+        JobPosting.employer_id == session['user_id']
+    ).first()
+    
+    if not application:
+        flash('Application not found or you do not have permission to view it.', 'error')
+        return redirect(url_for('main.employer_dashboard'))
+    
+    # Get the job details for context
+    job = application.job
+    
+    return render_template('view_application.html', application=application, job=job)
+
+@main.route('/update_application_status/<int:application_id>', methods=['POST'])
+def update_application_status(application_id):
+    """Update application status (accept, reject, etc.)"""
+    if not is_logged_in():
+        flash('Please log in to access this page.', 'error')
+        return redirect(url_for('main.login'))
+    
+    if session.get('user_role') != 'employer':
+        flash('Only employers can update applications.', 'error')
+        return redirect(url_for('main.home'))
+    
+    # Get the application and verify ownership
+    application = Application.query.join(JobPosting).filter(
+        Application.id == application_id,
+        JobPosting.employer_id == session['user_id']
+    ).first()
+    
+    if not application:
+        flash('Application not found or you do not have permission to update it.', 'error')
+        return redirect(url_for('main.employer_dashboard'))
+    
+    new_status = request.form.get('status')
+    notes = request.form.get('notes', '').strip()
+    
+    if new_status not in ['pending', 'reviewed', 'accepted', 'rejected']:
+        flash('Invalid status.', 'error')
+        return redirect(url_for('main.view_application', application_id=application_id))
+    
+    try:
+        application.status = new_status
+        application.employer_notes = notes
+        application.status_updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        flash(f'Application status updated to {new_status}.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error updating application status.', 'error')
+        print(f"Error updating application: {e}")
+    
+    return redirect(url_for('main.view_application', application_id=application_id))
