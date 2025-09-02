@@ -368,11 +368,16 @@ class User(db.Model):
         self.permissions = json.dumps(permissions_dict)
 
     def get_permissions(self):
-        """Get user permissions as dictionary"""
-        import json
+        """Get user permissions as a dictionary"""
+        if not self.permissions:
+            if self.role == 'admin':
+                return self.get_default_admin_permissions()
+            return {}
+    
         try:
-            return json.loads(self.permissions) if self.permissions else {}
-        except (json.JSONDecodeError, TypeError):
+            import json
+            return json.loads(self.permissions)
+        except:
             return {}
 
     def get_default_admin_permissions(self):
