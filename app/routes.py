@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from app.models import db, User, JobPosting, Application
 from werkzeug.security import check_password_hash
 from datetime import datetime
@@ -674,22 +674,38 @@ def create_admin():
                 return render_template('create_admin.html', user=current_user)
             
             # Create new admin user
-            success = User.create_admin(
-                username=username,
-                email=email,
-                password=password,
-                permissions=permissions,
-                full_name=full_name if full_name else None,
-                created_by=current_user.id
-            )
+            print(f"About to create admin with username: {username}")
+            print(f"Permissions: {permissions}")
             
-            if success:
-                flash(f'Admin "{username}" created successfully with assigned permissions!', 'success')
-                return redirect(url_for('main.admin_dashboard'))
-            else:
-                flash('Failed to create admin. Please try again.', 'error')
-                return render_template('create_admin.html', user=current_user)
+            # Right before calling User.create_admin:
+            try:
+                print("Calling User.create_admin...")
+                success = User.create_admin(
+                    username=username,
+                    email=email,
+                    password=password,
+                    permissions=permissions,
+                    full_name=full_name if full_name else None,
+                    created_by=current_user.id
+                )
+                print(f"User.create_admin returned: {success}")
                 
+                if success:
+                    flash(f'Admin "{username}" created successfully with assigned permissions!', 'success')
+                    return redirect(url_for('main.admin_dashboard'))
+                else:
+                    print("create_admin returned False")
+                    flash('Failed to create admin. Please try again.', 'error')
+                    return render_template('create_admin.html', user=current_user)
+                    
+            except Exception as e:
+                print(f"Exception in create_admin: {e}")
+                import traceback
+                traceback.print_exc()
+                db.session.rollback()
+                flash('An error occurred while creating the admin. Please try again.', 'error')
+                return render_template('create_admin.html', user=current_user)
+    
         except Exception as e:
             db.session.rollback()
             flash('An error occurred while creating the admin. Please try again.', 'error')
