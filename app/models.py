@@ -400,6 +400,41 @@ class User(db.Model):
             (User.username == identifier) | (User.email == identifier)
         ).first()
 
+    @classmethod
+    def create_admin(cls, username, email, password, permissions, full_name=None, created_by=None):
+        """Create a new admin user with specified permissions"""
+        try:
+            from werkzeug.security import generate_password_hash
+            import json
+            
+            # Create the admin user - remove created_at parameter
+            new_admin = cls(
+                username=username,
+                email=email,
+                password=generate_password_hash(password),
+                role='admin',
+                full_name=full_name
+                # Remove created_at=datetime.utcnow() - this should be handled automatically
+                # Remove created_by=created_by if your User model doesn't have this field
+            )
+            
+            db.session.add(new_admin)
+            db.session.flush()  # Get the ID without committing
+            
+            # Store permissions (assuming you have a permissions field or separate table)
+            # If you have a permissions JSON field:
+            new_admin.permissions = json.dumps(permissions)
+            
+            # Or if you handle permissions differently, adjust accordingly
+            
+            db.session.commit()
+            return True
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error creating admin: {e}")
+            return False
+        
 
 class JobPosting(db.Model):
     """Enhanced JobPosting model with application requirements"""
