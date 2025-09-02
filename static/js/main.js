@@ -272,8 +272,14 @@ function initializeSmoothScrolling() {
     const anchorLinks = document.querySelectorAll('a[href^="#"]');
     anchorLinks.forEach(function(link) {
         link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            if (href === '#') {
+                // Do nothing for href="#"
+                e.preventDefault();
+                return;
+            }
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const target = document.querySelector(href);
             if (target) {
                 target.scrollIntoView({
                     behavior: 'smooth',
