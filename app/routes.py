@@ -716,36 +716,29 @@ def create_admin():
 
 @main.route('/admin/manage_users')
 def manage_users():
-    """Manage users - view and edit user accounts"""
-    # Check authentication and permissions
+    """Admin route to manage all users"""
     if not is_logged_in():
-        flash('Please log in to access user management.', 'error')
+        flash('Please log in to access admin features.', 'error')
         return redirect(url_for('main.login'))
     
-    if session.get('user_role') != 'admin':
+    current_user = get_current_user()
+    if not current_user or current_user.role != 'admin':
         flash('Access denied. Admin privileges required.', 'error')
         return redirect(url_for('main.home'))
     
-    current_user = get_current_user()
-    if not current_user:
-        flash('User session expired. Please log in again.', 'error')
-        return redirect(url_for('main.login'))
-    
-    # Check permission
-    user_permissions = current_user.get_permissions()
-    if not user_permissions.get('manage_users', False):
-        flash('Access denied. You do not have permission to manage users.', 'error')
-        return redirect(url_for('main.admin_dashboard'))
-    
     try:
-        # Get all users for management
-        users = User.get_all_users_for_admin()
+        # Simple approach - get all users directly
+        users = User.query.order_by(User.created_at.desc()).all()
+        print(f"Found {len(users)} users")  # Debug line
         
-        return render_template('manage_users.html',
-                             users=users,
+        return render_template('manage_users.html', 
+                             users=users, 
                              user=current_user)
-                             
+        
     except Exception as e:
+        print(f"Error in manage_users: {e}")  # Debug line
+        import traceback
+        traceback.print_exc()  # Print full error traceback
         flash('Error loading user data. Please try again.', 'error')
         return redirect(url_for('main.admin_dashboard'))
 
@@ -1115,3 +1108,143 @@ def update_application_status(application_id):
         print(f"Error updating application status: {e}")
     
     return redirect(url_for('main.view_application', application_id=application_id))
+
+@main.route('/admin/view_user/<int:user_id>')
+def view_user(user_id):
+    """View user details"""
+    if not is_logged_in():
+        flash('Please log in to access admin features.', 'error')
+        return redirect(url_for('main.login'))
+    
+    current_user = get_current_user()
+    if not current_user or current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('main.home'))
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Get user statistics
+    user_stats = {
+        'applications_count': len(user.applications) if user.role == 'seeker' else 0,
+        'jobs_posted': len(user.job_postings) if user.role == 'employer' else 0,
+        'account_age': (datetime.utcnow() - user.created_at).days if user.created_at else 0
+    }
+    
+    return render_template('view_user.html', viewed_user=user, user=current_user, user_stats=user_stats)
+
+@main.route('/admin/edit_user/<int:user_id>', methods=['GET', 'POST'])
+def edit_user(user_id):
+    """Edit user details"""
+    if not is_logged_in():
+        flash('Please log in to access admin features.', 'error')
+        return redirect(url_for('main.login'))
+    
+    current_user = get_current_user()
+    if not current_user or current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('main.home'))
+    
+    user_to_edit = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        try:
+            user_to_edit.username = request.form.get('username', '').strip()
+            user_to_edit.email = request.form.get('email', '').strip()
+            user_to_edit.full_name = request.form.get('full_name', '').strip()
+            user_to_edit.phone = request.form.get('phone', '').strip()
+            user_to_edit.location = request.form.get('location', '').strip()
+            user_to_edit.is_active = bool(request.form.get('is_active'))
+            
+            # Don't allow changing admin role unless current user has special permissions
+            if user_to_edit.role != 'admin' or current_user.id == user_to_edit.id:
+                user_to_edit.role = request.form.get('role', user_to_edit.role)
+            
+            db.session.commit()
+            flash('User updated successfully!', 'success')
+            return redirect(url_for('main.manage_users'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Error updating user. Please try again.', 'error')
+    
+    return render_template('edit_user.html', user_to_edit=user_to_edit, user=current_user)
+
+@main.route('/admin/deactivate_user/<int:user_id>', methods=['POST'])
+def deactivate_user(user_id):
+    """Deactivate/Activate user"""
+    if not is_logged_in():
+        flash('Please log in to access admin features.', 'error')
+        return redirect(url_for('main.login'))
+    
+    current_user = get_current_user()
+    if not current_user or current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('main.home'))
+    
+    user_to_update = User.query.get_or_404(user_id)
+    
+    # Prevent deactivating self
+    if user_to_update.id == current_user.id:
+        flash('You cannot deactivate your own account.', 'error')
+        return redirect(url_for('main.manage_users'))
+    
+    try:
+        user_to_update.is_active = not user_to_update.is_active
+        db.session.commit()
+        
+        status = "activated" if user_to_update.is_active else "deactivated"
+        flash(f'User {user_to_update.username} has been {status}.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error updating user status. Please try again.', 'error')
+    
+    return redirect(url_for('main.manage_users'))
+
+@main.route('/admin/manage_jobs')
+def admin_manage_jobs():
+    """Admin route to manage all jobs"""
+    if not is_logged_in():
+        flash('Please log in to access admin features.', 'error')
+        return redirect(url_for('main.login'))
+    
+    current_user = get_current_user()
+    if not current_user or current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('main.home'))
+    
+    try:
+        jobs = JobPosting.query.order_by(JobPosting.posted_date.desc()).all()
+        return render_template('admin_manage_jobs.html', jobs=jobs, user=current_user)
+        
+    except Exception as e:
+        print(f"Error in admin_manage_jobs: {e}")
+        flash('Error loading jobs data. Please try again.', 'error')
+        return redirect(url_for('main.admin_dashboard'))
+
+@main.route('/admin/reports')
+def admin_reports():
+    """Admin reports page"""
+    if not is_logged_in():
+        flash('Please log in to access admin features.', 'error')
+        return redirect(url_for('main.login'))
+    
+    current_user = get_current_user()
+    if not current_user or current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('main.home'))
+    
+    try:
+        # Generate report data
+        reports_data = {
+            'user_growth': User.get_user_growth_stats(),
+            'job_statistics': JobPosting.get_job_statistics(),
+            'application_trends': Application.get_application_trends()
+        }
+        
+        return render_template('admin_reports.html', reports=reports_data, user=current_user)
+        
+    except Exception as e:
+        print(f"Error in admin_reports: {e}")
+        flash('Error loading reports data. Please try again.', 'error')
+        return redirect(url_for('main.admin_dashboard'))
