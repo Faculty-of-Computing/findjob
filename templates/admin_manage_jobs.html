@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Jobs - Admin - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-primary">
+                    <i class="fas fa-briefcase me-2"></i>
+                    Manage Jobs
+                </h2>
+                <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Options -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Jobs</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Jobs</option>
+                                <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
+                                <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
+                                <option value="draft" {% if request.args.get('status') == 'draft' %}selected{% endif %}>Draft</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="job_type" class="form-label">Job Type</label>
+                            <select class="form-select" id="job_type" name="job_type">
+                                <option value="">All Types</option>
+                                <option value="full-time" {% if request.args.get('job_type') == 'full-time' %}selected{% endif %}>Full-time</option>
+                                <option value="part-time" {% if request.args.get('job_type') == 'part-time' %}selected{% endif %}>Part-time</option>
+                                <option value="contract" {% if request.args.get('job_type') == 'contract' %}selected{% endif %}>Contract</option>
+                                <option value="remote" {% if request.args.get('job_type') == 'remote' %}selected{% endif %}>Remote</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="Job title, company..." value="{{ request.args.get('search', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Jobs Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">All Job Postings ({{ jobs|length }} jobs)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Job Title</th>
+                                    <th>Company</th>
+                                    <th>Employer</th>
+                                    <th>Location</th>
+                                    <th>Posted Date</th>
+                                    <th>Applications</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if jobs %}
+                                    {% for job in jobs %}
+                                    <tr>
+                                        <td>{{ job.id }}</td>
+                                        <td>
+                                            <strong>{{ job.title[:30] }}{% if job.title|length > 30 %}...{% endif %}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ job.job_type|title }}</small>
+                                        </td>
+                                        <td>{{ job.company_name }}</td>
+                                        <td>
+                                            <a href="{{ url_for('main.view_user', user_id=job.employer_id) }}" 
+                                               class="text-decoration-none">
+                                                {{ job.employer.username }}
+                                            </a>
+                                        </td>
+                                        <td>{{ job.location }}</td>
+                                        <td>
+                                            {{ job.posted_date.strftime('%m/%d/%Y') }}
+                                            <br>
+                                            <small class="text-muted">{{ job.posted_date.strftime('%I:%M %p') }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info fs-6">{{ job.applications|length }}</span>
+                                        </td>
+                                        <td>
+                                            {% if job.is_draft %}
+                                                <span class="badge bg-secondary">Draft</span>
+                                            {% elif job.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#jobModal{{ job.id }}" 
+                                                        title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-warning" title="Edit Job">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" 
+                                                        onclick="toggleJobStatus({{ job.id }}, '{{ 'deactivate' if job.is_active else 'activate' }}')"
+                                                        title="{{ 'Deactivate' if job.is_active else 'Activate' }}">
+                                                    <i class="fas fa-{{ 'ban' if job.is_active else 'check' }}"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">No jobs found</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Job Detail Modals -->
+{% if jobs %}
+    {% for job in jobs %}
+    <div class="modal fade" id="jobModal{{ job.id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">{{ job.title }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Company:</strong> {{ job.company_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Location:</strong> {{ job.location }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Job Type:</strong> {{ job.job_type|title }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Salary:</strong> {{ job.salary_range or 'Not specified' }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Posted:</strong> {{ job.posted_date.strftime('%B %d, %Y') }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Applications:</strong> {{ job.applications|length }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Description:</strong>
+                        <div class="border p-3 mt-2" style="max-height: 200px; overflow-y: auto;">
+                            {{ job.description|safe if job.description else 'No description provided' }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="{{ url_for('main.view_user', user_id=job.employer_id) }}" class="btn btn-info">
+                        View Employer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<script>
+function toggleJobStatus(jobId, action) {
+    if (confirm(Are you sure you want to ${action} this job?)) {
+        // Add AJAX call to toggle job status
+        fetch(/admin/toggle_job_status/${jobId}, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error updating job status');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
