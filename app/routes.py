@@ -1022,3 +1022,25 @@ def delete_job(job_id):
         flash('An error occurred while deleting the job.', 'error')
     
     return redirect(url_for('main.employer_dashboard'))
+
+@main.route('/manage_applications/<int:job_id>')
+def manage_applications(job_id):
+    """Manage applications for a specific job"""
+    if not is_logged_in():
+        flash('Please log in to access this page.', 'error')
+        return redirect(url_for('main.login'))
+    
+    if session.get('user_role') != 'employer':
+        flash('Only employers can manage applications.', 'error')
+        return redirect(url_for('main.home'))
+    
+    # Fetch the job from the database
+    job = JobPosting.query.filter_by(id=job_id, employer_id=session['user_id']).first()
+    if not job:
+        flash('Job not found or you do not have permission to access it.', 'error')
+        return redirect(url_for('main.employer_dashboard'))
+    
+    # Fetch applications for this job
+    applications = Application.query.filter_by(job_id=job_id).all()
+    
+    return render_template('manage_applications.html', job=job, applications=applications)
