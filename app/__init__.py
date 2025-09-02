@@ -55,4 +55,10 @@ def create_app():
         db.create_all()
         print("Database tables created successfully!")
     
+    # Ensure uploads directory exists
+    # this function holds upload files like resume
+    uploads_dir = os.path.join(app.static_folder, 'uploads')
+    if not os.path.exists(uploads_dir):
+        os.makedirs(uploads_dir)
+    
     return app
