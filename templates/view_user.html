@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}View User - {{ viewed_user.username }} - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-primary">
+                    <i class="fas fa-user me-2"></i>
+                    User Details: {{ viewed_user.username }}
+                </h2>
+                <div>
+                    <a href="{{ url_for('main.edit_user', user_id=viewed_user.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit User
+                    </a>
+                    <a href="{{ url_for('main.manage_users') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Users
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Information Card -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        User Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>User ID:</strong>
+                            <p class="text-muted mb-2">{{ viewed_user.id }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Username:</strong>
+                            <p class="text-muted mb-2">{{ viewed_user.username }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Email:</strong>
+                            <p class="text-muted mb-2">{{ viewed_user.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Full Name:</strong>
+                            <p class="text-muted mb-2">{{ viewed_user.full_name or 'Not provided' }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Role:</strong>
+                            <p class="mb-2">
+                                {% if viewed_user.role == 'admin' %}
+                                    <span class="badge bg-danger fs-6">Administrator</span>
+                                {% elif viewed_user.role == 'employer' %}
+                                    <span class="badge bg-success fs-6">Employer</span>
+                                {% else %}
+                                    <span class="badge bg-info fs-6">Job Seeker</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Status:</strong>
+                            <p class="mb-2">
+                                {% if viewed_user.is_active %}
+                                    <span class="badge bg-success fs-6">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary fs-6">Inactive</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Phone:</strong>
+                            <p class="text-muted mb-2">{{ viewed_user.phone or 'Not provided' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Location:</strong>
+                            <p class="text-muted mb-2">{{ viewed_user.location or 'Not provided' }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Member Since:</strong>
+                            <p class="text-muted mb-2">{{ viewed_user.created_at.strftime('%B %d, %Y') if viewed_user.created_at else 'Unknown' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Last Login:</strong>
+                            <p class="text-muted mb-2">{{ viewed_user.last_login.strftime('%B %d, %Y at %I:%M %p') if viewed_user.last_login else 'Never' }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if viewed_user.bio %}
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Bio:</strong>
+                            <p class="text-muted">{{ viewed_user.bio }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Card -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        User Statistics
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <h4 class="text-primary">{{ user_stats.account_age }}</h4>
+                        <p class="text-muted mb-0">Days Active</p>
+                    </div>
+                    
+                    {% if viewed_user.role == 'seeker' %}
+                    <div class="mb-3">
+                        <h4 class="text-success">{{ user_stats.applications_count }}</h4>
+                        <p class="text-muted mb-0">Applications Submitted</p>
+                    </div>
+                    {% elif viewed_user.role == 'employer' %}
+                    <div class="mb-3">
+                        <h4 class="text-warning">{{ user_stats.jobs_posted }}</h4>
+                        <p class="text-muted mb-0">Jobs Posted</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.edit_user', user_id=viewed_user.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-edit me-1"></i> Edit User
+                        </a>
+                        {% if viewed_user.id != user.id %}
+                        <form method="POST" action="{{ url_for('main.deactivate_user', user_id=viewed_user.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger btn-sm w-100" 
+                                    onclick="return confirm('Are you sure you want to {{ 'activate' if not viewed_user.is_active else 'deactivate' }} this user?')">
+                                <i class="fas fa-{{ 'check' if not viewed_user.is_active else 'ban' }} me-1"></i>
+                                {{ 'Activate' if not viewed_user.is_active else 'Deactivate' }}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
