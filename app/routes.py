@@ -1063,11 +1063,11 @@ def view_application(application_id):
     ).first()
     
     if not application:
-        flash('Application not found or you do not have permission to view it.', 'error')
+        flash('Application not found or you do not have permission to access it.', 'error')
         return redirect(url_for('main.employer_dashboard'))
     
-    # Get the job details for context
-    job = application.job
+    # Fetch the job details separately using job_id
+    job = JobPosting.query.get(application.job_id)
     
     return render_template('view_application.html', application=application, job=job)
 
@@ -1079,7 +1079,7 @@ def update_application_status(application_id):
         return redirect(url_for('main.login'))
     
     if session.get('user_role') != 'employer':
-        flash('Only employers can update applications.', 'error')
+        flash('Only employers can update application status.', 'error')
         return redirect(url_for('main.home'))
     
     # Get the application and verify ownership
@@ -1089,27 +1089,25 @@ def update_application_status(application_id):
     ).first()
     
     if not application:
-        flash('Application not found or you do not have permission to update it.', 'error')
+        flash('Application not found or you do not have permission to access it.', 'error')
         return redirect(url_for('main.employer_dashboard'))
     
     new_status = request.form.get('status')
     notes = request.form.get('notes', '').strip()
     
     if new_status not in ['pending', 'reviewed', 'accepted', 'rejected']:
-        flash('Invalid status.', 'error')
+        flash('Invalid application status.', 'error')
         return redirect(url_for('main.view_application', application_id=application_id))
     
     try:
         application.status = new_status
         application.employer_notes = notes
-        application.status_updated_at = datetime.utcnow()
-        
+        application.reviewed_date = datetime.now()
         db.session.commit()
         flash(f'Application status updated to {new_status}.', 'success')
-        
     except Exception as e:
         db.session.rollback()
-        flash('Error updating application status.', 'error')
-        print(f"Error updating application: {e}")
+        flash('Error updating application status. Please try again.', 'error')
+        print(f"Error updating application status: {e}")
     
     return redirect(url_for('main.view_application', application_id=application_id))
