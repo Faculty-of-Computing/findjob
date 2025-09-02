@@ -202,7 +202,7 @@ def submit_application(job_id):
     
     if session.get('user_role') != 'seeker':
         flash('Only job seekers can apply for jobs.', 'error')
-        return redirect(url_for('main.jobs'))
+        return redirect(url_for('main.home'))
     
     job = JobPosting.query.filter_by(id=job_id, is_active=True).first()
     if not job:
@@ -215,83 +215,70 @@ def submit_application(job_id):
     ).first()
     
     if existing_application:
-        flash('You have already applied for this job.', 'info')
+        flash('You have already applied for this job.', 'warning')
         return redirect(url_for('main.jobs'))
     
     try:
         # Handle file upload
         resume_filename = None
         if 'resume' in request.files:
-            resume = request.files['resume']
-            if resume.filename:
-                # Create uploads directory if it doesn't exist
-                import os
-                upload_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
-                os.makedirs(upload_dir, exist_ok=True)
-                
-                # Save file with unique name
+            resume_file = request.files['resume']
+            if resume_file and resume_file.filename:
+                # Generate secure filename
                 import uuid
-                file_extension = resume.filename.rsplit('.', 1)[1].lower()
-                resume_filename = f"{uuid.uuid4()}.{file_extension}"
-                resume.save(os.path.join(upload_dir, resume_filename))
+                import os
+                from werkzeug.utils import secure_filename
+                
+                # Get file extension
+                file_ext = os.path.splitext(secure_filename(resume_file.filename))[1]
+                resume_filename = f"{uuid.uuid4()}{file_ext}"
+                
+                # Save file
+                upload_path = os.path.join(current_app.static_folder, 'uploads', resume_filename)
+                resume_file.save(upload_path)
         
-        # Create application with all the data
-        new_application = Application(
+        # Create application record
+        application = Application(
             job_id=job_id,
             seeker_id=session['user_id'],
-            
-            # Personal Information
-            full_name=request.form.get('full_name', '').strip(),
-            email=request.form.get('email', '').strip(),
-            phone=request.form.get('phone', '').strip(),
-            address=request.form.get('address', '').strip(),
-            work_authorization=request.form.get('work_authorization', '').strip(),
-            
-            # Professional Profile
-            years_experience=int(request.form.get('years_experience', 0)) if request.form.get('years_experience') else None,
-            expected_salary=request.form.get('expected_salary', '').strip(),
+            full_name=request.form.get('full_name'),
+            email=request.form.get('email'),
+            phone=request.form.get('phone'),
+            address=request.form.get('address'),
+            work_authorization=request.form.get('work_authorization'),
+            years_experience=request.form.get('years_experience', type=int),
+            expected_salary=request.form.get('expected_salary'),
             willing_to_relocate=bool(request.form.get('willing_to_relocate')),
             willing_to_travel=bool(request.form.get('willing_to_travel')),
-            
-            # Education
-            highest_qualification=request.form.get('highest_qualification', '').strip(),
-            institution_name=request.form.get('institution_name', '').strip(),
-            field_of_study=request.form.get('field_of_study', '').strip(),
-            graduation_year=int(request.form.get('graduation_year', 0)) if request.form.get('graduation_year') else None,
-            certifications=request.form.get('certifications', '').strip(),
-            
-            # Skills
-            technical_skills=request.form.get('technical_skills', '').strip(),
-            soft_skills=request.form.get('soft_skills', '').strip(),
-            languages=request.form.get('languages', '').strip(),
-            
-            # Documents and Links
-            resume_filename=resume_filename,
-            cover_letter=request.form.get('cover_letter', '').strip(),
-            portfolio_url=request.form.get('portfolio_url', '').strip(),
-            linkedin_url=request.form.get('linkedin_url', '').strip(),
-            github_url=request.form.get('github_url', '').strip(),
-            
-            # Job-specific
-            motivation=request.form.get('motivation', '').strip(),
             availability_date=datetime.strptime(request.form.get('availability_date'), '%Y-%m-%d').date() if request.form.get('availability_date') else None,
-            referred_by=request.form.get('referred_by', '').strip(),
-            
-            # Legal
-            terms_accepted=bool(request.form.get('terms_accepted')),
-            data_consent=bool(request.form.get('data_consent'))
+            highest_qualification=request.form.get('highest_qualification'),
+            institution_name=request.form.get('institution_name'),
+            field_of_study=request.form.get('field_of_study'),
+            graduation_year=request.form.get('graduation_year', type=int),
+            certifications=request.form.get('certifications'),
+            technical_skills=request.form.get('technical_skills'),
+            soft_skills=request.form.get('soft_skills'),
+            languages=request.form.get('languages'),
+            resume_filename=resume_filename,
+            cover_letter=request.form.get('cover_letter'),
+            portfolio_url=request.form.get('portfolio_url'),
+            linkedin_url=request.form.get('linkedin_url'),
+            github_url=request.form.get('github_url'),
+            motivation=request.form.get('motivation'),
+            application_date=datetime.now(),
+            status='pending'
         )
         
-        db.session.add(new_application)
+        db.session.add(application)
         db.session.commit()
         
-        flash(f'Successfully applied for "{job.title}"! Your application has been submitted.', 'success')
+        flash('Application submitted successfully!', 'success')
         return redirect(url_for('main.seeker_dashboard'))
         
     except Exception as e:
         db.session.rollback()
-        flash('An error occurred while submitting your application. Please try again.', 'error')
-        print(f"Application error: {e}")
+        flash('Error submitting application. Please try again.', 'error')
+        print(f"Error submitting application: {e}")
         return redirect(url_for('main.apply_job_form', job_id=job_id))
 
 @main.route('/login', methods=['GET', 'POST'])
