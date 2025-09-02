@@ -179,14 +179,14 @@
                         {% endif %}
                         {% if user_permissions.get('manage_jobs', False) %}
                         <div class="col-md-3 mb-2">
-                            <a href="#" class="btn btn-outline-success w-100">
+                            <a href="{{ url_for('main.admin_manage_jobs') }}" class="btn btn-outline-success w-100">
                                 <i class="fas fa-briefcase"></i> Manage Jobs
                             </a>
                         </div>
                         {% endif %}
                         {% if user_permissions.get('view_reports', False) %}
                         <div class="col-md-3 mb-2">
-                            <a href="#" class="btn btn-outline-info w-100">
+                            <a href="{{ url_for('main.admin_reports') }}" class="btn btn-outline-info w-100">
                                 <i class="fas fa-chart-bar"></i> View Reports
                             </a>
                         </div>
