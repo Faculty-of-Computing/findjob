@@ -1297,7 +1297,7 @@ def admin_reports():
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         new_users_month = db.session.query(User).filter(User.created_at >= thirty_days_ago).count()
         
-        # Active jobs - FIX: Use is_active instead of status
+        # Active jobs
         active_jobs = db.session.query(JobPosting).filter_by(is_active=True).count()
         
         # Application statistics
@@ -1309,7 +1309,7 @@ def admin_reports():
         if total_applications > 0:
             success_rate = (accepted_applications / total_applications) * 100
         
-        # Recent activity - simplified queries
+        # Recent activity - Get real data from database
         recent_users = db.session.query(User)\
             .order_by(User.created_at.desc())\
             .limit(5).all()
@@ -1318,57 +1318,150 @@ def admin_reports():
             .order_by(JobPosting.posted_date.desc())\
             .limit(5).all()
         
-        # Top employers - simplified
+        # FIX: Use seeker_id instead of user_id for Application
+        recent_applications = db.session.query(Application)\
+            .join(JobPosting, Application.job_id == JobPosting.id)\
+            .join(User, Application.seeker_id == User.id)\
+            .order_by(Application.application_date.desc())\
+            .limit(5).all()
+        
+        # Top employers - Get real data with proper joins
+        top_employers = []
         try:
-            top_employers_query = db.session.query(
+            employers_data = db.session.query(
+                User.id,
                 User.username,
                 User.company_name,
-                db.func.count(JobPosting.id).label('jobs_count')
+                func.count(JobPosting.id).label('jobs_count')
             ).join(JobPosting, User.id == JobPosting.employer_id)\
+             .filter(User.role == 'employer')\
              .group_by(User.id, User.username, User.company_name)\
-             .order_by(db.func.count(JobPosting.id).desc())\
+             .order_by(func.count(JobPosting.id).desc())\
              .limit(5).all()
             
-            top_employers = []
-            for employer in top_employers_query:
+            for employer_data in employers_data:
                 # Get application count for this employer's jobs
                 app_count = db.session.query(Application)\
                     .join(JobPosting, Application.job_id == JobPosting.id)\
-                    .filter(JobPosting.employer_id == User.query.filter_by(username=employer.username).first().id)\
+                    .filter(JobPosting.employer_id == employer_data.id)\
                     .count()
                 
                 top_employers.append({
-                    'username': employer.username,
-                    'company_name': employer.company_name or 'N/A',
-                    'jobs_count': employer.jobs_count,
+                    'username': employer_data.username,
+                    'company_name': employer_data.company_name or 'N/A',
+                    'jobs_count': employer_data.jobs_count,
                     'applications_count': app_count
                 })
         except Exception as e:
             print(f"Error getting top employers: {e}")
             top_employers = []
         
-        # Top seekers - simplified
+        # Top seekers - Get real data with proper joins (FIX: Use seeker_id)
+        top_seekers = []
         try:
-            top_seekers_query = db.session.query(
+            seekers_data = db.session.query(
+                User.id,
                 User.username,
-                db.func.count(Application.id).label('applications_count'),
-                User.last_login
-            ).join(Application, User.id == Application.user_id)\
-             .group_by(User.id, User.username, User.last_login)\
-             .order_by(db.func.count(Application.id).desc())\
+                func.count(Application.id).label('applications_count')
+            ).join(Application, User.id == Application.seeker_id)\
+             .filter(User.role == 'seeker')\
+             .group_by(User.id, User.username)\
+             .order_by(func.count(Application.id).desc())\
              .limit(5).all()
             
-            top_seekers = []
-            for seeker in top_seekers_query:
+            for seeker_data in seekers_data:
+                # Calculate success rate for this seeker (FIX: Use seeker_id)
+                total_apps = seeker_data.applications_count
+                accepted_apps = db.session.query(Application)\
+                    .filter(Application.seeker_id == seeker_data.id, Application.status == 'accepted')\
+                    .count()
+                
+                success_rate_seeker = (accepted_apps / total_apps * 100) if total_apps > 0 else 0
+                
+                # Get last login (if available)
+                user = db.session.query(User).get(seeker_data.id)
+                last_login = user.last_login if hasattr(user, 'last_login') and user.last_login else user.created_at
+                
                 top_seekers.append({
-                    'username': seeker.username,
-                    'applications_count': seeker.applications_count,
-                    'success_rate': 0,  # Can be calculated later if needed
-                    'last_login': seeker.last_login
+                    'username': seeker_data.username,
+                    'applications_count': seeker_data.applications_count,
+                    'success_rate': round(success_rate_seeker, 1),
+                    'last_login': last_login
                 })
         except Exception as e:
             print(f"Error getting top seekers: {e}")
             top_seekers = []
+        
+        # Recent system activity - Build from real database events
+        recent_activity = []
+        
+        # Add recent user registrations
+        for user in recent_users[:3]:  # Get top 3
+            time_diff = datetime.utcnow() - user.created_at
+            if time_diff.days == 0:
+                if time_diff.seconds < 3600:
+                    time_str = f"{time_diff.seconds // 60} min ago"
+                else:
+                    time_str = f"{time_diff.seconds // 3600} hours ago"
+            else:
+                time_str = f"{time_diff.days} days ago"
+            
+            recent_activity.append({
+                'time': time_str,
+                'activity': 'New User',
+                'activity_type': 'user',
+                'user': user.username,
+                'details': f"Registered as {user.role.title()}"
+            })
+        
+        # Add recent job postings
+        for job in recent_jobs[:3]:  # Get top 3
+            time_diff = datetime.utcnow() - job.posted_date
+            if time_diff.days == 0:
+                if time_diff.seconds < 3600:
+                    time_str = f"{time_diff.seconds // 60} min ago"
+                else:
+                    time_str = f"{time_diff.seconds // 3600} hours ago"
+            else:
+                time_str = f"{time_diff.days} days ago"
+            
+            # Get employer username
+            employer = db.session.query(User).get(job.employer_id)
+            
+            recent_activity.append({
+                'time': time_str,
+                'activity': 'Job Posted',
+                'activity_type': 'job',
+                'user': employer.username if employer else 'Unknown',
+                'details': f"{job.title} position"
+            })
+        
+        # Add recent applications (FIX: Use seeker_id)
+        for app in recent_applications[:3]:  # Get top 3
+            time_diff = datetime.utcnow() - app.application_date
+            if time_diff.days == 0:
+                if time_diff.seconds < 3600:
+                    time_str = f"{time_diff.seconds // 60} min ago"
+                else:
+                    time_str = f"{time_diff.seconds // 3600} hours ago"
+            else:
+                time_str = f"{time_diff.days} days ago"
+            
+            # Get applicant username (FIX: Use seeker_id)
+            applicant = db.session.query(User).get(app.seeker_id)
+            job = db.session.query(JobPosting).get(app.job_id)
+            
+            recent_activity.append({
+                'time': time_str,
+                'activity': 'Application',
+                'activity_type': 'application',
+                'user': applicant.username if applicant else 'Unknown',
+                'details': f"Applied to {job.title if job else 'Unknown Job'}"
+            })
+        
+        # Sort recent activity by time (most recent first)
+        # For simplicity, we'll use the existing order since we're getting recent items
+        recent_activity = sorted(recent_activity, key=lambda x: x['time'])[:10]
         
         # Build reports object
         reports = {
@@ -1384,7 +1477,7 @@ def admin_reports():
                 'active_jobs': active_jobs,
                 'draft_jobs': total_jobs - active_jobs,
                 'jobs_this_month': 0,  # Can be calculated if needed
-                'avg_applications': total_applications / max(total_jobs, 1),
+                'avg_applications': round(total_applications / max(total_jobs, 1), 1),
                 'top_employers': top_employers
             },
             'application_trends': {
@@ -1392,16 +1485,19 @@ def admin_reports():
                 'new_this_week': 0,  # Can be calculated if needed
                 'applications_today': 0,  # Can be calculated if needed
                 'pending_applications': pending_applications,
-                'success_rate': success_rate,
-                'conversion_rate': success_rate,
+                'success_rate': round(success_rate, 1),
+                'conversion_rate': round(success_rate, 1),
                 'top_seekers': top_seekers
-            }
+            },
+            'recent_activity': recent_activity
         }
         
         return render_template('admin_reports.html', reports=type('obj', (object,), reports)())
         
     except Exception as e:
         print(f"Error in admin_reports: {str(e)}")
+        import traceback
+        traceback.print_exc()
         flash(f'Error generating reports: {str(e)}', 'error')
         return redirect(url_for('main.admin_dashboard'))
 
