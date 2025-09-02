@@ -427,9 +427,33 @@
                     {% endif %}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success">Accept</button>
-                    <button type="button" class="btn btn-danger">Reject</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <form method="POST" action="{{ url_for('main.update_application_status', application_id=application.application_id) }}" id="statusForm{{ application.application_id }}">
+                        <!-- Status Selection -->
+                        <div class="mb-3 w-100">
+                            <label for="status{{ application.application_id }}" class="form-label">Update Status:</label>
+                            <select class="form-select" name="status" id="status{{ application.application_id }}" required>
+                                <option value="">Select Action...</option>
+                                <option value="reviewed">Mark as Reviewed</option>
+                                <option value="accepted">Accept Application</option>
+                                <option value="rejected">Reject Application</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Notes (optional for reviewed/accepted, encouraged for rejected) -->
+                        <div class="mb-3 w-100">
+                            <label for="notes{{ application.application_id }}" class="form-label">Notes (Optional):</label>
+                            <textarea class="form-control" name="notes" id="notes{{ application.application_id }}" 
+                                      rows="3" placeholder="Add notes about this application..."></textarea>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between w-100">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Update Status
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
