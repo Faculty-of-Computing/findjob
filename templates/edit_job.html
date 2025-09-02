@@ -190,9 +190,15 @@
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save me-2"></i>Save Changes
                             </button>
-                            <a href="{{ url_for('main.employer_dashboard') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Cancel
-                            </a>
+                            {% if is_admin %}
+                                <a href="{{ url_for('main.admin_manage_jobs') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Manage Jobs
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('main.employer_dashboard') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Cancel
+                                </a>
+                            {% endif %}
                         </div>
                     </form>
                 </div>
