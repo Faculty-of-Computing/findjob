@@ -1,48 +1,138 @@
 {% extends "base.html" %}
 
-{% block title %}Manage Applications - FindJob{% endblock %}
+{% block title %}Manage Applications - {{ job.title }} - FindJob{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">Manage Applications for {{ job.title }}</h2>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Applications for {{ job.title }}</h2>
+            <p class="text-muted mb-0">{{ job.company_name }} • {{ job.location }}</p>
+        </div>
+        <a href="{{ url_for('main.employer_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3>{{ applications|length }}</h3>
+                    <small>Total Applications</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h3>{{ applications|selectattr("status", "equalto", "pending")|list|length }}</h3>
+                    <small>Pending Review</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3>{{ applications|selectattr("status", "equalto", "accepted")|list|length }}</h3>
+                    <small>Accepted</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h3>{{ applications|selectattr("status", "equalto", "rejected")|list|length }}</h3>
+                    <small>Rejected</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if applications %}
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="table-light">
-                <tr>
-                    <th>Applicant Name</th>
-                    <th>Email</th>
-                    <th>Applied Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for app in applications %}
-                <tr>
-                    <td>{{ app.full_name }}</td>
-                    <td>{{ app.email }}</td>
-                    <td>{{ app.application_date.strftime('%B %d, %Y %I:%M %p') }}</td>
-                    <td>
-                        <span class="badge bg-{{ 'warning' if app.status == 'pending' else 'success' if app.status == 'accepted' else 'danger' }}">
-                            {{ app.status|capitalize }}
-                        </span>
-                    </td>
-                    <td>
-                        <form method="POST" action="{{ url_for('main.manage_applications', job_id=job.id) }}" style="display:inline-block;">
-                            <input type="hidden" name="application_id" value="{{ app.id }}">
-                            <button name="action" value="accept" class="btn btn-success btn-sm">Accept</button>
-                            <button name="action" value="decline" class="btn btn-danger btn-sm">Decline</button>
-                            <button name="action" value="pending" class="btn btn-warning btn-sm">Pending</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-users me-2"></i>Applications</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Applicant</th>
+                        <th>Contact</th>
+                        <th>Experience</th>
+                        <th>Applied Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td>
+                            <div>
+                                <strong>{{ app.full_name }}</strong>
+                                {% if app.years_experience %}
+                                <br><small class="text-muted">{{ app.years_experience }} years experience</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <i class="fas fa-envelope me-1"></i>{{ app.email }}
+                                {% if app.phone %}
+                                <br><i class="fas fa-phone me-1"></i>{{ app.phone }}
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if app.technical_skills %}
+                            <small class="text-muted">{{ app.technical_skills[:50] }}{% if app.technical_skills|length > 50 %}...{% endif %}</small>
+                            {% else %}
+                            <small class="text-muted">Not specified</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>
+                                {{ app.application_date.strftime('%B %d, %Y') }}
+                                <br><small class="text-muted">{{ app.application_date.strftime('%I:%M %p') }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'warning' if app.status == 'pending' else 'info' if app.status == 'reviewed' else 'success' if app.status == 'accepted' else 'danger' }}">
+                                {{ app.status|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('main.view_application', application_id=app.id) }}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>View Details
+                                </a>
+                                {% if app.resume_filename %}
+                                <a href="{{ url_for('static', filename='uploads/' + app.resume_filename) }}" 
+                                   class="btn btn-outline-info btn-sm" target="_blank">
+                                    <i class="fas fa-download me-1"></i>Resume
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
     {% else %}
-    <div class="alert alert-info">No applications found for this job.</div>
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No Applications Yet</h5>
+            <p class="text-muted">Applications for this job will appear here once candidates start applying.</p>
+        </div>
+    </div>
     {% endif %}
 </div>
 {% endblock %}
