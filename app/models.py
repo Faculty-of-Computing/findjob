@@ -587,3 +587,168 @@ def drop_tables(app):
     with app.app_context():
         db.drop_all()
         print("All database tables dropped!")
+
+    @staticmethod
+    def get_user_growth_stats():
+        """Get user growth statistics for admin reports"""
+        try:
+            from datetime import datetime, timedelta
+            
+            # Get total users by role
+            total_users = User.query.count()
+            seekers_count = User.query.filter_by(role='seeker').count()
+            employers_count = User.query.filter_by(role='employer').count()
+            admins_count = User.query.filter_by(role='admin').count()
+            
+            # Get new users this month
+            current_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            new_this_month = User.query.filter(User.created_at >= current_month).count()
+            
+            return {
+                'total_users': total_users,
+                'seekers_count': seekers_count,
+                'employers_count': employers_count,
+                'admins_count': admins_count,
+                'new_this_month': new_this_month
+            }
+        except Exception as e:
+            print(f"Error in get_user_growth_stats: {e}")
+            return {
+                'total_users': 0,
+                'seekers_count': 0,
+                'employers_count': 0,
+                'admins_count': 0,
+                'new_this_month': 0
+            }
+    
+    @staticmethod
+    def get_job_statistics():
+        """Get job statistics for admin reports"""
+        try:
+            from datetime import datetime, timedelta
+            
+            # Basic job counts
+            total_jobs = JobPosting.query.count()
+            active_jobs = JobPosting.query.filter_by(is_active=True).count()
+            draft_jobs = JobPosting.query.filter_by(is_draft=True).count()
+            
+            # Jobs this month
+            current_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            jobs_this_month = JobPosting.query.filter(JobPosting.posted_date >= current_month).count()
+            
+            # Average applications per job (simplified)
+            avg_applications = 0
+            try:
+                jobs_with_apps = JobPosting.query.all()
+                if jobs_with_apps:
+                    total_apps = sum(len(job.applications) for job in jobs_with_apps if hasattr(job, 'applications'))
+                    avg_applications = total_apps / len(jobs_with_apps) if len(jobs_with_apps) > 0 else 0
+            except:
+                avg_applications = 0
+            
+            # Top employers (simplified)
+            top_employers = []
+            try:
+                employers = User.query.filter_by(role='employer').limit(5).all()
+                for emp in employers:
+                    jobs_count = len(emp.job_postings) if hasattr(emp, 'job_postings') and emp.job_postings else 0
+                    applications_count = 0
+                    if hasattr(emp, 'job_postings') and emp.job_postings:
+                        for job in emp.job_postings:
+                            if hasattr(job, 'applications') and job.applications:
+                                applications_count += len(job.applications)
+                    
+                    top_employers.append({
+                        'username': emp.username,
+                        'company_name': getattr(emp, 'company_name', 'N/A'),
+                        'jobs_count': jobs_count,
+                        'applications_count': applications_count
+                    })
+            except Exception as e:
+                print(f"Error getting top employers: {e}")
+            
+            return {
+                'total_jobs': total_jobs,
+                'active_jobs': active_jobs,
+                'draft_jobs': draft_jobs,
+                'jobs_this_month': jobs_this_month,
+                'avg_applications': float(avg_applications),
+                'top_employers': top_employers
+            }
+        except Exception as e:
+            print(f"Error in get_job_statistics: {e}")
+            return {
+                'total_jobs': 0,
+                'active_jobs': 0,
+                'draft_jobs': 0,
+                'jobs_this_month': 0,
+                'avg_applications': 0,
+                'top_employers': []
+            }
+    
+    @staticmethod
+    def get_application_trends():
+        """Get application trends for admin reports"""
+        try:
+            from datetime import datetime, timedelta
+            
+            # Basic application counts
+            total_applications = Application.query.count()
+            
+            # Applications this week
+            week_ago = datetime.now() - timedelta(days=7)
+            new_this_week = Application.query.filter(Application.application_date >= week_ago).count()
+            
+            # Applications today
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            applications_today = Application.query.filter(Application.application_date >= today).count()
+            
+            # Pending applications
+            pending_applications = Application.query.filter_by(status='pending').count()
+            
+            # Success rate (accepted applications)
+            accepted_applications = Application.query.filter_by(status='accepted').count()
+            success_rate = (accepted_applications / total_applications * 100) if total_applications > 0 else 0
+            
+            # Conversion rate (any non-pending status)
+            processed_applications = Application.query.filter(Application.status != 'pending').count()
+            conversion_rate = (processed_applications / total_applications * 100) if total_applications > 0 else 0
+            
+            # Top seekers (simplified)
+            top_seekers = []
+            try:
+                seekers = User.query.filter_by(role='seeker').limit(5).all()
+                for seeker in seekers:
+                    applications_count = len(seeker.applications) if seeker.applications else 0
+                    accepted_count = len([app for app in seeker.applications if app.status == 'accepted']) if seeker.applications else 0
+                    seeker_success_rate = (accepted_count / applications_count * 100) if applications_count > 0 else 0
+                    
+                    top_seekers.append({
+                        'username': seeker.username,
+                        'applications_count': applications_count,
+                        'success_rate': seeker_success_rate,
+                        'last_login': seeker.last_login
+                    })
+            except:
+                pass
+            
+            return {
+                'total_applications': total_applications,
+                'new_this_week': new_this_week,
+                'applications_today': applications_today,
+                'pending_applications': pending_applications,
+                'success_rate': success_rate,
+                'conversion_rate': conversion_rate,
+                'top_seekers': top_seekers
+            }
+        except Exception as e:
+            print(f"Error in get_application_trends: {e}")
+            return {
+                'total_applications': 0,
+                'new_this_week': 0,
+                'applications_today': 0,
+                'pending_applications': 0,
+                'success_rate': 0,
+                'conversion_rate': 0,
+                'top_seekers': []
+            }
