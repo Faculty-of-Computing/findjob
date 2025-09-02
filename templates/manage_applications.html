@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Applications - FindJob{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Manage Applications for {{ job.title }}</h2>
+    {% if applications %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Applicant Name</th>
+                    <th>Email</th>
+                    <th>Applied Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td>{{ app.full_name }}</td>
+                    <td>{{ app.email }}</td>
+                    <td>{{ app.application_date.strftime('%B %d, %Y %I:%M %p') }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'warning' if app.status == 'pending' else 'success' if app.status == 'accepted' else 'danger' }}">
+                            {{ app.status|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('main.manage_applications', job_id=job.id) }}" style="display:inline-block;">
+                            <input type="hidden" name="application_id" value="{{ app.id }}">
+                            <button name="action" value="accept" class="btn btn-success btn-sm">Accept</button>
+                            <button name="action" value="decline" class="btn btn-danger btn-sm">Decline</button>
+                            <button name="action" value="pending" class="btn btn-warning btn-sm">Pending</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No applications found for this job.</div>
+    {% endif %}
+</div>
+{% endblock %}

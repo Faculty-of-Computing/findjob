@@ -129,9 +129,9 @@
                                                         data-bs-target="#jobModal{{ job.id }}">
                                                     View
                                                 </button>
-                                                <a href="#" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                                <a href="{{ url_for('main.edit_job', job_id=job.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
                                                 {% if job.application_count > 0 %}
-                                                <a href="#" class="btn btn-sm btn-outline-info">
+                                                <a href="{{ url_for('main.manage_applications', job_id=job.id) }}" class="btn btn-sm btn-outline-info">
                                                     Applications ({{ job.application_count }})
                                                 </a>
                                                 {% endif %}
