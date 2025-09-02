@@ -1,5 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, jsonify
 from app.models import db, User, JobPosting, Application
+from werkzeug.security import check_password_hash
+from datetime import datetime, timedelta
+import json
+from sqlalchemy import func
+
 from werkzeug.security import check_password_hash
 from datetime import datetime
 import json
@@ -1027,20 +1032,20 @@ def manage_applications(job_id):
         flash('Please log in to access this page.', 'error')
         return redirect(url_for('main.login'))
     
-    if session.get('user_role') != 'employer':
-        flash('Only employers can manage applications.', 'error')
+    # Check if user is employer and owns this job, or is admin
+    job = JobPosting.query.get_or_404(job_id)
+    if session.get('user_role') != 'admin' and job.employer_id != session.get('user_id'):
+        flash('Access denied.', 'error')
         return redirect(url_for('main.home'))
     
-    # Fetch the job from the database
-    job = JobPosting.query.filter_by(id=job_id, employer_id=session['user_id']).first()
-    if not job:
-        flash('Job not found or you do not have permission to access it.', 'error')
-        return redirect(url_for('main.employer_dashboard'))
-    
-    # Fetch applications for this job
     applications = Application.query.filter_by(job_id=job_id).all()
     
     return render_template('manage_applications.html', job=job, applications=applications)
+
+@main.route('/job_applications/<int:job_id>')
+def job_applications(job_id):
+    """View applications for a specific job (alias for manage_applications)"""
+    return redirect(url_for('main.manage_applications', job_id=job_id))
 
 @main.route('/view_application/<int:application_id>')
 def view_application(application_id):
@@ -1208,48 +1213,216 @@ def deactivate_user(user_id):
 
 @main.route('/admin/manage_jobs')
 def admin_manage_jobs():
-    """Admin route to manage all jobs"""
+    """Admin page to manage all job postings"""
     if not is_logged_in():
-        flash('Please log in to access admin features.', 'error')
+        flash('Please log in to access this page.', 'error')
         return redirect(url_for('main.login'))
     
-    current_user = get_current_user()
-    if not current_user or current_user.role != 'admin':
+    if session.get('user_role') != 'admin':
         flash('Access denied. Admin privileges required.', 'error')
         return redirect(url_for('main.home'))
     
-    try:
-        jobs = JobPosting.query.order_by(JobPosting.posted_date.desc()).all()
-        return render_template('admin_manage_jobs.html', jobs=jobs, user=current_user)
-        
-    except Exception as e:
-        print(f"Error in admin_manage_jobs: {e}")
-        flash('Error loading jobs data. Please try again.', 'error')
-        return redirect(url_for('main.admin_dashboard'))
+    # Get filter parameters
+    status_filter = request.args.get('status', '')
+    job_type_filter = request.args.get('job_type', '')
+    search_query = request.args.get('search', '')
+    
+    # Base query for all jobs
+    query = JobPosting.query
+    
+    # Apply filters
+    if status_filter == 'active':
+        query = query.filter(JobPosting.is_active == True, JobPosting.is_draft == False)
+    elif status_filter == 'inactive':
+        query = query.filter(JobPosting.is_active == False, JobPosting.is_draft == False)
+    elif status_filter == 'draft':
+        query = query.filter(JobPosting.is_draft == True)
+    
+    if job_type_filter:
+        query = query.filter(JobPosting.job_type == job_type_filter)
+    
+    if search_query:
+        query = query.filter(
+            db.or_(
+                JobPosting.title.contains(search_query),
+                JobPosting.company_name.contains(search_query),
+                JobPosting.description.contains(search_query)
+            )
+        )
+    
+    # Get all jobs with employer information
+    jobs = query.join(User, JobPosting.employer_id == User.id).add_columns(
+        User.username.label('employer_username')
+    ).order_by(JobPosting.posted_date.desc()).all()
+    
+    # Process the results to include application counts
+    jobs_data = []
+    for job, employer_username in jobs:
+        job_dict = {
+            'id': job.id,
+            'title': job.title,
+            'company_name': job.company_name,
+            'location': job.location,
+            'job_type': job.job_type,
+            'salary_range': job.salary_range,
+            'description': job.description,
+            'posted_date': job.posted_date,
+            'is_active': job.is_active,
+            'is_draft': job.is_draft,
+            'employer_id': job.employer_id,
+            'employer': type('obj', (object,), {'username': employer_username})(),
+            'applications': Application.query.filter_by(job_id=job.id).all()
+        }
+        jobs_data.append(job_dict)
+    
+    return render_template('admin_manage_jobs.html', jobs=jobs_data)
 
 @main.route('/admin/reports')
 def admin_reports():
-    """Admin reports page"""
-    if not is_logged_in():
-        flash('Please log in to access admin features.', 'error')
-        return redirect(url_for('main.login'))
-    
-    current_user = get_current_user()
-    if not current_user or current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('main.home'))
-    
+    """Admin reports and analytics page"""
     try:
-        # Generate report data
-        reports_data = {
-            'user_growth': User.get_user_growth_stats(),
-            'job_statistics': JobPosting.get_job_statistics(),
-            'application_trends': Application.get_application_trends()
+        from datetime import datetime, timedelta
+        
+        # Basic counts with error handling
+        total_users = db.session.query(User).count()
+        total_jobs = db.session.query(JobPosting).count()
+        total_applications = db.session.query(Application).count()
+        
+        # Users by role
+        seekers_count = db.session.query(User).filter_by(role='seeker').count()
+        employers_count = db.session.query(User).filter_by(role='employer').count()
+        admins_count = db.session.query(User).filter_by(role='admin').count()
+        
+        # Recent data (last 30 days)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        new_users_month = db.session.query(User).filter(User.created_at >= thirty_days_ago).count()
+        
+        # Active jobs - FIX: Use is_active instead of status
+        active_jobs = db.session.query(JobPosting).filter_by(is_active=True).count()
+        
+        # Application statistics
+        pending_applications = db.session.query(Application).filter_by(status='pending').count()
+        accepted_applications = db.session.query(Application).filter_by(status='accepted').count()
+        
+        # Calculate success rate safely
+        success_rate = 0
+        if total_applications > 0:
+            success_rate = (accepted_applications / total_applications) * 100
+        
+        # Recent activity - simplified queries
+        recent_users = db.session.query(User)\
+            .order_by(User.created_at.desc())\
+            .limit(5).all()
+        
+        recent_jobs = db.session.query(JobPosting)\
+            .order_by(JobPosting.posted_date.desc())\
+            .limit(5).all()
+        
+        # Top employers - simplified
+        try:
+            top_employers_query = db.session.query(
+                User.username,
+                User.company_name,
+                db.func.count(JobPosting.id).label('jobs_count')
+            ).join(JobPosting, User.id == JobPosting.employer_id)\
+             .group_by(User.id, User.username, User.company_name)\
+             .order_by(db.func.count(JobPosting.id).desc())\
+             .limit(5).all()
+            
+            top_employers = []
+            for employer in top_employers_query:
+                # Get application count for this employer's jobs
+                app_count = db.session.query(Application)\
+                    .join(JobPosting, Application.job_id == JobPosting.id)\
+                    .filter(JobPosting.employer_id == User.query.filter_by(username=employer.username).first().id)\
+                    .count()
+                
+                top_employers.append({
+                    'username': employer.username,
+                    'company_name': employer.company_name or 'N/A',
+                    'jobs_count': employer.jobs_count,
+                    'applications_count': app_count
+                })
+        except Exception as e:
+            print(f"Error getting top employers: {e}")
+            top_employers = []
+        
+        # Top seekers - simplified
+        try:
+            top_seekers_query = db.session.query(
+                User.username,
+                db.func.count(Application.id).label('applications_count'),
+                User.last_login
+            ).join(Application, User.id == Application.user_id)\
+             .group_by(User.id, User.username, User.last_login)\
+             .order_by(db.func.count(Application.id).desc())\
+             .limit(5).all()
+            
+            top_seekers = []
+            for seeker in top_seekers_query:
+                top_seekers.append({
+                    'username': seeker.username,
+                    'applications_count': seeker.applications_count,
+                    'success_rate': 0,  # Can be calculated later if needed
+                    'last_login': seeker.last_login
+                })
+        except Exception as e:
+            print(f"Error getting top seekers: {e}")
+            top_seekers = []
+        
+        # Build reports object
+        reports = {
+            'user_growth': {
+                'total_users': total_users,
+                'seekers_count': seekers_count,
+                'employers_count': employers_count,
+                'admins_count': admins_count,
+                'new_this_month': new_users_month
+            },
+            'job_statistics': {
+                'total_jobs': total_jobs,
+                'active_jobs': active_jobs,
+                'draft_jobs': total_jobs - active_jobs,
+                'jobs_this_month': 0,  # Can be calculated if needed
+                'avg_applications': total_applications / max(total_jobs, 1),
+                'top_employers': top_employers
+            },
+            'application_trends': {
+                'total_applications': total_applications,
+                'new_this_week': 0,  # Can be calculated if needed
+                'applications_today': 0,  # Can be calculated if needed
+                'pending_applications': pending_applications,
+                'success_rate': success_rate,
+                'conversion_rate': success_rate,
+                'top_seekers': top_seekers
+            }
         }
         
-        return render_template('admin_reports.html', reports=reports_data, user=current_user)
+        return render_template('admin_reports.html', reports=type('obj', (object,), reports)())
         
     except Exception as e:
-        print(f"Error in admin_reports: {e}")
-        flash('Error loading reports data. Please try again.', 'error')
+        print(f"Error in admin_reports: {str(e)}")
+        flash(f'Error generating reports: {str(e)}', 'error')
         return redirect(url_for('main.admin_dashboard'))
+
+@main.route('/admin/toggle_job_status/<int:job_id>', methods=['POST'])
+def toggle_job_status(job_id):
+    """Toggle job active status (for admin)"""
+    if not is_logged_in():
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    if session.get('user_role') != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'})
+    
+    try:
+        job = JobPosting.query.get_or_404(job_id)
+        job.is_active = not job.is_active
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Job {"activated" if job.is_active else "deactivated"} successfully',
+            'new_status': job.is_active
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
