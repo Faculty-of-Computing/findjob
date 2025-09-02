@@ -1071,7 +1071,12 @@ def view_application(application_id):
 @main.route('/update_application_status/<int:application_id>', methods=['POST'])
 def update_application_status(application_id):
     """Update application status (accept, reject, etc.)"""
+    print(f"=== UPDATE APPLICATION STATUS CALLED ===")  # Add this
+    print(f"Application ID: {application_id}")  # Add this
+    print(f"Form data: {request.form}")  # Add this
+    
     if not is_logged_in():
+        print("User not logged in")  # Add this
         flash('Please log in to access this page.', 'error')
         return redirect(url_for('main.login'))
     
