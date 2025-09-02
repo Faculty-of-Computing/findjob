@@ -320,8 +320,32 @@ body {
 /* Footer styles */
 footer {
     margin-top: auto;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%) !important;
+    border-top: 3px solid var(--warning-color);
+}
+
+footer h5, footer h6 {
+    color: white !important;
+    font-weight: 600;
+}
+
+footer .text-white-50:hover {
+    color: var(--warning-color) !important;
+    transition: color 0.3s ease;
+}
+
+footer .fab:hover {
+    transform: scale(1.2);
+    transition: transform 0.3s ease;
+}
+
+footer p {
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+}
+
+footer small {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* Loading spinner */
