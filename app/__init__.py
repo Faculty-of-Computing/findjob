@@ -22,12 +22,22 @@ def create_app():
         app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///findjob.db')
         app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bvaIbwm7Ctm2Gf2CZUUfaHU--qYbVUknAEwGcAcP_qs=')
         app.config['DEBUG'] = False
+        # Production file paths
+        app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'static', 'uploads'))
+        app.config['SESSION_TYPE'] = os.environ.get('SESSION_TYPE', 'filesystem')
+        app.config['SESSION_FILE_DIR'] = os.environ.get('SESSION_FILE_DIR', '/tmp/flask_sessions')
+        app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB
     else:
         # Development configuration
         db_path = os.path.join(os.path.dirname(__file__), '..', 'findjob.db')
         app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
         app.config['SECRET_KEY'] = 'bvaIbwm7Ctm2Gf2CZUUfaHU--qYbVUknAEwGcAcP_qs='
         app.config['DEBUG'] = True
+        # Development file paths
+        app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads')
+        app.config['SESSION_TYPE'] = 'filesystem'
+        app.config['SESSION_FILE_DIR'] = '/tmp/flask_sessions'
+        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
