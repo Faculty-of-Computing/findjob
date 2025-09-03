@@ -47,9 +47,3 @@ environments:
         value: false
       - key: LOG_LEVEL
         value: INFO
-#   - name: production
-#     envVars:
-#       - key: FLASK_ENV
-#         value: production
-#       - key: FLASK_DEBUG
-#         value: false

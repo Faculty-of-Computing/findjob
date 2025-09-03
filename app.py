@@ -45,5 +45,6 @@ if __name__ == '__main__':
         threaded=True if env == 'production' else False
     )
 
-# Export app for other WSGI servers if needed
-application = app
+# Export app for both naming conventions
+application = app  # For WSGI servers that expect 'application'
+# app is already available as 'app' for Gunicorn
