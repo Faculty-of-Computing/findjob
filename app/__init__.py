@@ -98,7 +98,7 @@ def create_default_admin():
             print("=" * 50)
             print("✅ DEFAULT ADMIN USER CREATED!")
             print("Username: admin")
-            print("Email: admin@jobhub.com")
+            print("Email: admin@findjob.com")
             print("Password: admin123")
             print("⚠️  IMPORTANT: Change these credentials after first login!")
             print("=" * 50)
