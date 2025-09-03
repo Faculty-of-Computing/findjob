@@ -4,6 +4,7 @@ from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
 import json
 from sqlalchemy import func
+import requests
 
 from werkzeug.security import check_password_hash
 from datetime import datetime
@@ -1617,3 +1618,162 @@ def admin_edit_job(job_id):
             flash('An error occurred while updating the job. Please try again.', 'error')
     
     return render_template('edit_job.html', job=job, is_admin=True)
+
+@main.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    """Forgot password route - sends reset link to user's email"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        
+        if not email:
+            flash('Please enter your email address.', 'error')
+            return render_template('forgot_password.html')
+        
+        # Find user by email
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            try:
+                # Generate reset token
+                reset_token = user.generate_reset_token()
+                db.session.commit()
+                
+                # Create reset link
+                reset_url = url_for('main.reset_password', token=reset_token, _external=True)
+                
+                # Send email using Formspree (or your preferred service)
+                success = send_password_reset_email(user.email, user.username, reset_url)
+                
+                if success:
+                    flash('Password reset instructions have been sent to your email address.', 'success')
+                else:
+                    flash('There was an error sending the email. Please try again later.', 'error')
+                    
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error generating reset token: {e}")
+                flash('An error occurred. Please try again later.', 'error')
+        else:
+            # For security, don't reveal whether email exists or not
+            flash('If an account with that email exists, password reset instructions have been sent.', 'info')
+        
+        return redirect(url_for('main.login'))
+    
+    return render_template('forgot_password.html')
+
+@main.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Reset password route - allows user to set new password with valid token"""
+    # Find user by reset token
+    user = User.query.filter_by(reset_token=token).first()
+    
+    if not user or not user.verify_reset_token(token):
+        flash('Invalid or expired password reset link.', 'error')
+        return redirect(url_for('main.forgot_password'))
+    
+    if request.method == 'POST':
+        password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        
+        # Validate passwords
+        if not password or not confirm_password:
+            flash('Please fill in all password fields.', 'error')
+            return render_template('reset_password.html', token=token)
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long.', 'error')
+            return render_template('reset_password.html', token=token)
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return render_template('reset_password.html', token=token)
+        
+        try:
+            # Update password and clear reset token
+            user.set_password(password)
+            user.clear_reset_token()
+            db.session.commit()
+            
+            flash('Your password has been reset successfully! You can now log in with your new password.', 'success')
+            return redirect(url_for('main.login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error resetting password: {e}")
+            flash('An error occurred while resetting your password. Please try again.', 'error')
+    
+    return render_template('reset_password.html', token=token)
+
+def send_password_reset_email(email, username, reset_url):
+    """Send password reset email using Formspree or similar service"""
+    try:
+        # Option 1: Using Formspree (replace YOUR_FORM_ID with actual Formspree form ID)
+        formspree_url = "https://formspree.io/f/xeolrqde"  # Replace with Formspree form ID
+        
+        # Email content
+        subject = "Password Reset Request - FindJob"
+        message = f"""
+Hello {username},
+
+You recently requested to reset your password for your FindJob account.
+
+Click the link below to reset your password:
+{reset_url}
+
+This link will expire in 1 hour for security reasons.
+
+If you did not request this password reset, please ignore this email or contact support if you have concerns.
+
+Best regards,
+The FindJob Team
+        """
+        
+        # Prepare form data for Formspree
+        form_data = {
+            'email': email,
+            'subject': subject,
+            'message': message,
+            '_replyto': email,
+            '_subject': subject
+        }
+        
+        # Send via Formspree
+        response = requests.post(formspree_url, data=form_data)
+        
+        if response.status_code == 200:
+            return True
+        else:
+            print(f"Formspree error: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
+
+# Alternative email sending function using a different service
+def send_password_reset_email_alternative(email, username, reset_url):
+    """Alternative email sending using EmailJS or similar client-side service"""
+    try:
+        # You can also use services like EmailJS, Netlify Forms, etc.
+        # This is a placeholder for your preferred email service
+        
+        # For now, we'll just log the email content (for development)
+        print(f"""
+=== PASSWORD RESET EMAIL ===
+To: {email}
+Subject: Password Reset Request - FindJob
+
+Hello {username},
+
+Click this link to reset your password:
+{reset_url}
+
+This link expires in 1 hour.
+===========================
+        """)
+        
+        return True  # Return True for testing purposes
+        
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
