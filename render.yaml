@@ -1,11 +1,55 @@
 services:
+  # FindJob Web Application
   - type: web
-    name: findjob
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+    name: findjob-app
+    runtime: python3
+    buildCommand: |
+      pip install -r requirements.txt &&
+      python init_production.py
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 30 app:application
     envVars:
       - key: FLASK_ENV
         value: production
       - key: FLASK_DEBUG
-        value: False
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///findjob.db
+      - key: UPLOAD_FOLDER
+        value: /opt/render/project/src/static/uploads
+      - key: MAX_CONTENT_LENGTH
+        value: 16777216  # 16MB file upload limit
+      - key: SESSION_TYPE
+        value: filesystem
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: GUNICORN_CMD_ARGS
+        value: --access-logfile - --error-logfile -
+    healthCheckPath: /health
+    plan: free
+    # Production optimizations
+    autoDeploy: true
+    disk:
+      name: findjob-disk
+      mountPath: /opt/render/project/src
+      sizeGB: 1  # 1GB persistent disk for SQLite database and uploads
+
+# Optional: Environment groups for different deployment stages
+environments:
+  - name: production
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
+#   - name: production
+#     envVars:
+#       - key: FLASK_ENV
+#         value: production
+#       - key: FLASK_DEBUG
+#         value: false
