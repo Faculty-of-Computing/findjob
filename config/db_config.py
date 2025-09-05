@@ -1,45 +1,45 @@
 """
-Database configuration for SQLite3
+Database configuration for SQLite3 and PostgreSQL
 """
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent
 
-# SQLite database configuration
+# Database configuration
 class DatabaseConfig:
-    """SQLite database configuration"""
+    """Database configuration for SQLite and PostgreSQL"""
     
-    # Database file path
-    DATABASE_PATH = PROJECT_ROOT / 'findjob.db'
+    @classmethod
+    def get_database_url(cls):
+        """Get the database URL from environment or default to SQLite"""
+        return os.environ.get('DATABASE_URL', f'sqlite:///{PROJECT_ROOT / "findjob.db"}')
     
-    # SQLAlchemy database URI for SQLite
-    SQLALCHEMY_DATABASE_URI = f'sqlite:///{DATABASE_PATH}'
+    @classmethod
+    def get_database_type(cls):
+        """Determine the database type from the URL"""
+        url = cls.get_database_url()
+        parsed = urlparse(url)
+        if parsed.scheme == 'sqlite':
+            return 'sqlite'
+        elif parsed.scheme == 'postgresql':
+            return 'postgresql'
+        else:
+            return 'unknown'
+    
+    @classmethod
+    def is_sqlite(cls):
+        return cls.get_database_type() == 'sqlite'
+    
+    @classmethod
+    def is_postgresql(cls):
+        return cls.get_database_type() == 'postgresql'
     
     # SQLAlchemy configuration
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False  # Set to True for SQL debugging
-    
-    @classmethod
-    def get_database_url(cls):
-        """Get the database URL for SQLAlchemy"""
-        return cls.SQLALCHEMY_DATABASE_URI
-    
-    @classmethod
-    def get_database_path(cls):
-        """Get the database file path"""
-        return str(cls.DATABASE_PATH)
-    
-    @classmethod
-    def database_exists(cls):
-        """Check if the database file exists"""
-        return cls.DATABASE_PATH.exists()
-    
-    @classmethod
-    def create_database_directory(cls):
-        """Ensure the database directory exists"""
-        cls.DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # Environment-specific configurations
 class Config:
