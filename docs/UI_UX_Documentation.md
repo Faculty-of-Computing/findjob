@@ -2,7 +2,293 @@
 
 ## Design Philosophy
 
-FindJob's user interface design follows modern web design principles with a focus on usability, accessibility, and responsive design. The design system emphasizes clarity, consistency, and user-centered experiences.
+FindJob's user interface design follows modern web design principles with a focus on usability, accessibility, ### Job Cards (Primary Component)
+
+#### Job Card Structure
+```html
+<div class="card h-100 shadow-sm border-0 job-card">
+  <div class="card-body d-flex flex-column">
+    <!-- Job Header -->
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div class="flex-grow## Page Layouts
+
+### Home Page Layout
+```
+┌─────────────────────────────────────────────────┐
+│                 Navigation Bar                  │
+│  [FindJob] Home Jobs About [Login] [Register]   │
+├─────────────────────────────────────────────────┤
+│                    Header                       │
+│  ┌─────────────────────────────────────────┐    │
+│  │ Welcome to FindJob               [Login]│    │
+│  │ Find your dream job today!    [Register]│    │
+│  └─────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────┤
+│              Statistics Section                 │
+│  ┌─────────────┬─────────────┬─────────────┐    │
+│  │ Total Users │Total Jobs  │Applications│      │
+│  │    [1,250]  │   [350]     │   [2,100]   │    │
+│  └─────────────┴─────────────┴─────────────┘    │
+├─────────────────────────────────────────────────┤
+│              Featured Jobs                      │
+│  ┌─────────────────┐  ┌─────────────────┐       │
+│  │   Job Card 1    │  │   Job Card 2    │       │
+│  │                 │  │                 │       │
+│  │ [View Details]  │  │ [View Details]  │       │
+│  └─────────────────┘  └─────────────────┘       │
+├─────────────────────────────────────────────────┤
+│                    Footer                       │
+│  © 2024 FindJob. All rights reserved.           │
+└─────────────────────────────────────────────────┘
+```
+
+### Login/Register Page Layout
+```
+┌─────────────────────────────────────────────────┐
+│                 Navigation Bar                  │
+├─────────────────────────────────────────────────┤
+│              Authentication Form                │
+│  ┌─────────────────────────────────────────┐    │
+│  │              Login/Register             │    │
+│  │                                         │    │
+│  │  Username/Email: [input]                │    │
+│  │  Password: [input]                      │    │
+│  │  Confirm Password: [input] (register)   │    │
+│  │  User Type: [Seeker] [Employer]         │    │
+│  │                                         │    │
+│  │           [Login/Register]              │    │
+│  │                                         │    │
+│  │  Don't have account? [Register/Login]   │    │
+│  └─────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────┤
+│                    Footer                       │
+└─────────────────────────────────────────────────┘
+```
+
+### Post Job Page Layout
+```
+┌─────────────────────────────────────────────────┐
+│                 Navigation Bar                  │
+├─────────────────────────────────────────────────┤
+│                 Post Job Form                   │
+│  ┌─────────────────────────────────────────┐    │
+│  │            Post New Job                 │    │
+│  │                                         │    │
+│  │  Job Title: [input]                     │    │
+│  │  Company Name: [input]                  │    │
+│  │  Location: [input]                      │    │
+│  │  Job Type: [Full-time] [Part-time]      │    │
+│  │         [Contract] [Internship]         │    │
+│  │                                         │    │
+│  │  Salary Range: [input]                  │    │
+│  │  Description: [textarea]                │    │
+│  │  Requirements: [textarea]               │    │
+│  │                                         │    │
+│  │         [Preview] [Post Job]            │    │
+│  └─────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────┤
+│                    Footer                       │
+└─────────────────────────────────────────────────┘
+```ass="card-title text-primary fw-bold mb-1">
+          {{ job.title }}
+        </h5>
+        <h6 class="card-subtitle text-muted mb-2">
+          <i class="fas fa-building me-1"></i>{{ job.company_name }}
+        </h6>
+      </div>
+      <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+        {{ job.job_type }}
+      </span>
+    </div>
+
+    <!-- Job Details -->
+    <div class="mb-3">
+      <p class="text-muted mb-1">
+        <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+      </p>
+      <p class="text-muted mb-1">
+        <i class="fas fa-dollar-sign me-1"></i>{{ job.salary_range }}
+      </p>
+      <p class="text-muted small mb-0">
+        <i class="fas fa-calendar me-1"></i>Posted {{ job.posted_date }}
+      </p>
+    </div>
+
+    <!-- Job Description Preview -->
+    <div class="flex-grow-1 mb-3">
+      <p class="card-text text-muted">
+        {{ job.description[:150] }}...
+      </p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-auto">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="btn-group" role="group">
+          <button class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-eye me-1"></i>View Details
+          </button>
+          <button class="btn btn-primary btn-sm">
+            <i class="fas fa-paper-plane me-1"></i>Apply Now
+          </button>
+        </div>
+        <small class="text-muted">
+          <i class="fas fa-user me-1"></i>{{ job.employer.username }}
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+### Statistics Cards
+
+#### Dashboard Statistics Card
+```html
+<div class="card text-center h-100 shadow-sm">
+  <div class="card-body">
+    <i class="fas fa-paper-plane text-primary fs-1 mb-3"></i>
+    <h4 class="card-title">{{ count }}</h4>
+    <p class="card-text text-muted">{{ label }}</p>
+  </div>
+</div>
+```
+
+### Data Tables
+
+#### Responsive Applications Table
+```html
+<div class="table-responsive">
+  <table class="table table-hover">
+    <thead class="table-light">
+      <tr>
+        <th>Job Title</th>
+        <th>Company</th>
+        <th>Location</th>
+        <th>Applied Date</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <strong>{{ application.job_title }}</strong>
+          <br>
+          <small class="text-muted">{{ application.job_type }}</small>
+          <br>
+          <small class="text-success">{{ application.salary_range }}</small>
+        </td>
+        <td>{{ application.company_name }}</td>
+        <td>{{ application.location }}</td>
+        <td>{{ application.application_date }}</td>
+        <td>
+          <span class="badge bg-warning">Pending</span>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary">View</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+### Modal Components
+
+#### Job Details Modal
+```html
+<div class="modal fade" id="jobModal{{ job.id }}">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-briefcase me-2"></i>{{ job.title }}
+        </h5>
+        <button class="btn-close btn-close-white"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Job details content -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary">Close</button>
+        <button class="btn btn-primary">Apply Now</button>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+### Navigation Components
+
+#### Main Navigation Bar
+```html
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <i class="fas fa-briefcase me-2"></i>FindJob
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <div class="navbar-nav me-auto">
+        <a class="nav-link" href="/jobs">
+          <i class="fas fa-search me-1"></i>Jobs
+        </a>
+        <!-- Other nav items -->
+      </div>
+
+      <ul class="navbar-nav">
+        <!-- User menu with dropdown -->
+      </ul>
+    </div>
+  </div>
+</nav>
+```
+
+### Search and Filter Components
+
+#### Advanced Search Form
+```html
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body bg-gradient-light">
+    <form method="GET" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">
+          <i class="fas fa-search me-1"></i>Search Jobs
+        </label>
+        <input type="text" class="form-control" name="search" placeholder="Job title, company, keywords...">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">
+          <i class="fas fa-map-marker-alt me-1"></i>Location
+        </label>
+        <input type="text" class="form-control" name="location" placeholder="City, state, or remote">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">
+          <i class="fas fa-clock me-1"></i>Job Type
+        </label>
+        <select class="form-select" name="job_type">
+          <option value="">All Types</option>
+          <option value="full-time">Full-time</option>
+          <option value="part-time">Part-time</option>
+          <option value="contract">Contract</option>
+          <option value="internship">Internship</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="fas fa-search me-1"></i>Search
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+```ign. The design system emphasizes clarity, consistency, and user-centered experiences.
 
 ## Design System
 
@@ -256,80 +542,217 @@ small { font-size: 0.875rem; } /* 14px */
 
 ### Job Listing Page Layout
 ```
-┌─────────────────────────────────────┐
-│              Header                 │
-├─────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────────┐ │
-│  │   Filters   │  │   Job Results   │ │
-│  │   Sidebar   │  │                 │ │
-│  └─────────────┘  │  ┌─────────────┐ │ │
-│                   │  │   Job Card   │ │ │
-│                   │  │             │ │ │
-│                   │  └─────────────┘ │ │
-│                   │  ┌─────────────┐ │ │
-│                   │  │   Job Card   │ │ │
-│                   │  │             │ │ │
-│                   │  └─────────────┘ │ │
-│                   │                 │ │
-│                   │  Pagination      │ │
-│                   └─────────────────┘ │
-├─────────────────────────────────────┤
-│              Footer                 │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│                    Header                       │
+│  ┌─────────────────────────────────────────┐    │
+│  │ Job Opportunities              [Post Job]│    │
+│  └─────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────┤
+│              Search & Filter Section            │
+│  ┌─────────────┬─────────────┬─────────────┐    │
+│  │ Search Jobs │  Location   │  Job Type   │    │
+│  │ [input]     │  [input]    │  [select]   │    │
+│  └─────────────┴─────────────┴─────────────┘    │
+├─────────────────────────────────────────────────┤
+│                 Job Listings                    │
+│  ┌─────────────────┐  ┌─────────────────┐       │
+│  │   Job Card 1    │  │   Job Card 2    │       │
+│  │ ┌─────────────┐ │  │ ┌─────────────┐ │       │
+│  │ │ Job Title   │ │  │ │ Job Title   │ │       │
+│  │ │ Company     │ │  │ │ Company     │ │       │
+│  │ │ [Badge]     │ │  │ │ [Badge]     │ │       │
+│  │ └─────────────┘ │  │ └─────────────┘ │       │
+│  │ Location        │  │ Location        │       │
+│  │ Salary          │  │ Salary          │       │
+│  │ Posted Date     │  │ Posted Date     │       │
+│  │                 │  │                 │       │
+│  │ Description     │  │ Description     │       │
+│  │ Preview...      │  │ Preview...      │       │
+│  │                 │  │                 │       │
+│  │ [View Details]  │  │ [View Details]  │       │
+│  │ [Apply Now]     │  │ [Apply Now]     │       │
+│  └─────────────────┘  └─────────────────┘       │
+│                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐       │
+│  │   Job Card 3    │  │   Job Card 4    │       │
+│  │      ...        │  │      ...        │       │
+│  └─────────────────┘  └─────────────────┘       │
+├─────────────────────────────────────────────────┤
+│              Pagination Controls                │
+│  [Previous] [1] [2] [3] ... [Next]              │
+└─────────────────────────────────────────────────┘
 ```
 
-### Dashboard Layout
+### Dashboard Layout (Job Seeker)
 ```
-┌─────────────────────────────────────┐
-│              Header                 │
-├─────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────────┐ │
-│  │ Navigation │  │   Main Content   │ │
-│  │   Menu     │  │                 │ │
-│  └─────────────┘  │  ┌─────────────┐ │ │
-│                   │  │ Dashboard    │ │ │
-│                   │  │   Cards      │ │ │
-│                   │  └─────────────┘ │ │
-│                   │  ┌─────────────┐ │ │
-│                   │  │   Content    │ │ │
-│                   │  │    Area      │ │ │
-│                   │  └─────────────┘ │ │
-│                   └─────────────────┘ │
-├─────────────────────────────────────┤
-│              Footer                 │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│                    Header                       │
+│  Welcome back, [Username]!           [Seeker]  │
+├─────────────────────────────────────────────────┤
+│              Statistics Cards                   │
+│  ┌─────────────┬─────────────┬─────────────┐    │
+│  │ Applications│  Pending   │  Reviewed  │    │
+│  │ Submitted   │  Review    │             │    │
+│  │    [15]     │    [8]      │    [5]      │    │
+│  │             │            │             │    │
+│  │ [📤]        │  [⏰]       │  [👁️]       │    │
+│  └─────────────┴─────────────┴─────────────┘    │
+│  ┌─────────────────────────────────────────┐    │
+│  │              Accepted                   │    │
+│  │                [2]                      │    │
+│  │                                         │    │
+│  │              [✅]                       │    │
+│  └─────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────┤
+│            Job Applications Table               │
+│  ┌─────────────────────────────────────────┐    │
+│  │ Job Title     │ Company │ Location │ Date│  │
+│  │ ──────────────┼─────────┼──────────┼─────┤  │
+│  │ Software Dev  │ Tech Co │ NYC      │1/15 │  │
+│  │ Full-time     │         │          │     │  │
+│  │ $80k-100k     │         │          │     │  │
+│  │ ──────────────┼─────────┼──────────┼─────┤  │
+│  │ Data Analyst  │ Data Inc│ Remote   │1/10 │  │
+│  │ Contract      │         │          │     │  │
+│  │ $60k-80k      │         │          │     │  │
+│  └─────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────┘
+```
+
+### Dashboard Layout (Employer)
+```
+┌─────────────────────────────────────────────────┐
+│                    Header                       │
+│  Employer Dashboard              [Post New Job] │
+├─────────────────────────────────────────────────┤
+│              Statistics Cards                   │
+│  ┌─────────────┬─────────────┬─────────────┐    │
+│  │ Active Jobs │Total Apps  │Pending Apps│    │
+│  │    [12]     │   [45]      │    [8]      │    │
+│  │             │             │             │    │
+│  │ [💼]        │ [👥]        │ [⏰]        │    │
+│  └─────────────┴─────────────┴─────────────┘    │
+│  ┌─────────────────────────────────────────┐    │
+│  │          Total Jobs Posted             │    │
+│  │                [28]                    │    │
+│  │                                         │    │
+│  │              [📊]                       │    │
+│  └─────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────┤
+│              Job Postings Table                 │
+│  ┌─────────────────────────────────────────┐    │
+│  │ Job Title     │ Location│Posted│Apps│Status│ │
+│  │ ──────────────┼─────────┼──────┼────┼───────┤ │
+│  │ Software Eng  │ NYC     │1/20  │12  │Active │ │
+│  │ Full-time     │         │      │    │       │ │
+│  │ ──────────────┼─────────┼──────┼────┼───────┤ │
+│  │ UX Designer   │ Remote  │1/15  │8   │Active │ │
+│  │ Contract      │         │      │    │       │ │
+│  └─────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────┤
+│              Action Buttons                     │
+│  [View Applications] [Edit Job] [Post New Job]  │
+└─────────────────────────────────────────────────┘
 ```
 
 ## Responsive Design
 
-### Breakpoints
-- **Extra Small**: < 576px (mobile phones)
-- **Small**: ≥ 576px (large phones)
-- **Medium**: ≥ 768px (tablets)
-- **Large**: ≥ 992px (desktops)
-- **Extra Large**: ≥ 1200px (large desktops)
+## Responsive Design
 
-### Mobile-First Approach
+### Bootstrap 5 Breakpoints (Used in FindJob)
+- **Extra Small**: < 576px (mobile phones - single column)
+- **Small**: ≥ 576px (large phones - single column)
+- **Medium**: ≥ 768px (tablets - 2 columns for job cards)
+- **Large**: ≥ 992px (desktops - 2 columns for job cards)
+- **Extra Large**: ≥ 1200px (large desktops - 2 columns for job cards)
+- **XXL**: ≥ 1400px (extra large desktops)
+
+### Responsive Layout Patterns
+
+#### Job Cards Grid
 ```css
-/* Mobile First */
-.form-control {
-  font-size: 16px; /* Prevents zoom on iOS */
+/* Mobile: Single column */
+.job-card {
+  margin-bottom: 1rem;
 }
 
-/* Tablet and up */
+/* Tablet and up: Two columns */
 @media (min-width: 768px) {
-  .form-control {
-    font-size: 14px;
+  .job-card {
+    margin-bottom: 1.5rem;
   }
 }
 
-/* Desktop and up */
+/* Desktop: Maintain two columns with better spacing */
 @media (min-width: 992px) {
-  .container {
-    max-width: 960px;
+  .job-card {
+    margin-bottom: 2rem;
   }
 }
 ```
+
+#### Navigation Responsiveness
+```html
+<!-- Mobile Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <i class="fas fa-briefcase me-2"></i>FindJob
+    </a>
+
+    <!-- Mobile toggle button -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Collapsible navigation menu -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <!-- Navigation items -->
+    </div>
+  </div>
+</nav>
+```
+
+#### Statistics Cards Grid
+```html
+<!-- Responsive statistics cards -->
+<div class="row mb-4">
+  <div class="col-md-3 col-sm-6 col-12 mb-3">
+    <div class="card text-center h-100 shadow-sm">
+      <!-- Card content -->
+    </div>
+  </div>
+  <!-- Repeat for other cards -->
+</div>
+```
+
+#### Table Responsiveness
+```html
+<!-- Responsive table wrapper -->
+<div class="table-responsive">
+  <table class="table table-hover">
+    <!-- Table content -->
+  </table>
+</div>
+```
+
+### Mobile-First Considerations
+
+#### Touch-Friendly Elements
+- **Button sizes**: Minimum 44px touch targets
+- **Form inputs**: Height of at least 44px
+- **Spacing**: Adequate spacing between interactive elements
+
+#### Content Hierarchy on Mobile
+- **Simplified navigation**: Collapsible menu
+- **Stacked layout**: Single column for job cards
+- **Prioritized content**: Most important information first
+- **Readable typography**: Appropriate font sizes for mobile
+
+#### Performance Optimizations
+- **Lazy loading**: Images load as needed
+- **Compressed assets**: Minified CSS and JavaScript
+- **Efficient layouts**: CSS Grid and Flexbox for performance
 
 ### Responsive Navigation
 ```html
