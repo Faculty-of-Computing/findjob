@@ -1,13 +1,19 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy 
+from flask_migrate import Migrate
 from datetime import timedelta
 import os
+from dotenv import load_dotenv
 
 # Initialize SQLAlchemy instance globally
 db = SQLAlchemy()
+migrate = Migrate()
 
 # Function to define app logic
 def create_app():
+    # Load environment variables from .env file
+    load_dotenv()
+    
     # Get the absolute path to the templates directory
     template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
     static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
@@ -29,9 +35,8 @@ def create_app():
         app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB
     else:
         # Development configuration
-        db_path = os.path.join(os.path.dirname(__file__), '..', 'findjob.db')
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
-        app.config['SECRET_KEY'] = 'bvaIbwm7Ctm2Gf2CZUUfaHU--qYbVUknAEwGcAcP_qs='
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(os.path.dirname(__file__), "..", "findjob.db")}')
+        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bvaIbwm7Ctm2Gf2CZUUfaHU--qYbVUknAEwGcAcP_qs=')
         app.config['DEBUG'] = True
         # Development file paths
         app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads')
@@ -52,6 +57,7 @@ def create_app():
 
     # Initialize SQLAlchemy with the app
     db.init_app(app)
+    migrate.init_app(app, db)
     
     # Import models after db is initialized (to avoid circular imports)
     from app.models import User, JobPosting, Application
