@@ -118,4 +118,3 @@
 - Comprehensive documentation
 - Version control best practices
 - Code review processes</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/Functional_Requirements.md

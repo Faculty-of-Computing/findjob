@@ -387,4 +387,3 @@ static/uploads/
 - **Security incident alerts**
 
 This comprehensive system design ensures that FindJob is built on solid architectural foundations with room for future growth and enhancements.</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/System_Design.md

@@ -571,4 +571,3 @@ CREATE INDEX idx_users_email ON users(email);
 - [ ] Advanced security features
 
 This appendix provides comprehensive reference materials, code examples, and checklists to support the development, deployment, and maintenance of FindJob. It should be updated regularly as the project evolves.</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/Appendix.md

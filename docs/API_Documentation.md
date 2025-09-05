@@ -458,4 +458,3 @@ Use a web browser or tools like Postman to test the endpoints.
 - **Database load testing**
 
 This API documentation provides a comprehensive overview of FindJob's endpoint structure and functionality. As the application evolves, this documentation should be updated to reflect new features and changes.</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/API_Documentation.md

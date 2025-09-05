@@ -13,10 +13,10 @@ services:
         value: production
       - key: FLASK_DEBUG
         value: false
-      - key: SECRET_KEYpostgresql
+      - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: postgresql://postgres.nrcqrruiuscdqkvkjbol:Fu9fc.Up?nMnS2@aws-1-eu-north-1.pooler.supabase.com:5432/postgres  # Update with your Supabase URI
+        value: postgresql://postgres:[YOUR_SUPABASE_PASSWORD]@[YOUR_SUPABASE_HOST]:5432/postgres  # Update with your Supabase URI
       - key: UPLOAD_FOLDER
         value: /opt/render/project/src/static/uploads
       - key: MAX_CONTENT_LENGTH

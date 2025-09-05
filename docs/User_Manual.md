@@ -629,4 +629,3 @@ A: Contact administrator or use the account deletion feature in settings.
 ---
 
 *Thank you for using FindJob! We hope this manual helps you make the most of our platform. For the latest updates and features, check our website regularly.*</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/User_Manual.md

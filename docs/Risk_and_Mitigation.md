@@ -207,4 +207,3 @@
 - **Capability Building**: Investment in risk management skills
 - **Technology Investment**: Tools for better risk identification and monitoring
 - **Cultural Development**: Building risk-aware organizational culture</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/Risk_and_Mitigation.md

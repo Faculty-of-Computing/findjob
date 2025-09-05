@@ -62,4 +62,3 @@ This documentation is organized into the following sections:
 8. **Implementation Details** - Code structure and development notes
 9. **Appendix** - References and additional resources
 10. **Conclusion** - Summary and next steps</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/Introduction.md

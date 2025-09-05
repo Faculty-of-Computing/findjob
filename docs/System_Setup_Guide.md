@@ -485,4 +485,3 @@ After successful setup:
 5. **Contribute**: Submit pull requests for improvements
 
 This setup guide ensures developers can quickly get the FindJob application running locally for development, testing, and contribution purposes.</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/System_Setup_Guide.md

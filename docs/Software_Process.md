@@ -189,4 +189,3 @@ FindJob was developed using an **Agile-inspired development approach** with iter
 - **Response Time**: Average API response time
 - **User Satisfaction**: Net Promoter Score
 - **Error Rate**: Application error percentage</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/Software_Process.md

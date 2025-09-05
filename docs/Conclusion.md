@@ -168,4 +168,3 @@ We would like to thank:
 *FindJob - Connecting Talent with Opportunity*
 
 *Developed with ❤️ using Flask, SQLAlchemy, and modern web technologies*</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/Conclusion.md

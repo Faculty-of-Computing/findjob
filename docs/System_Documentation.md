@@ -252,4 +252,3 @@
 - **Conversion rates**: Application to hire ratio
 - **Customer satisfaction**: NPS score
 - **Revenue growth**: Monthly recurring revenue</content>
-<parameter name="filePath">/home/icekid/Projects/job-board/findjob/docs/System_Documentation.md
